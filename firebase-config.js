@@ -20,6 +20,8 @@ window.FIREBASE_CONFIG = {
 
 window.MCT_SETTINGS = {
   schoolLine: 'ATS RAK · Mathematics Department · AY 2026–27',
+  // The owner sees the department overview and can add coordinators. Must match the email in firestore.rules.
+  ownerEmail: 'mohammad.awaad@actvet.gov.ae',
   contacts: {
     abdullah: { name: 'Mr. Abdullah', email: 'abdullah.abbas@actvet.gov.ae' },
     habib:    { name: 'Mr. Habib',    email: 'Mohamed.Habib@actvet.gov.ae' },

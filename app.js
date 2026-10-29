@@ -5,6 +5,8 @@
 const CFG = window.FIREBASE_CONFIG;
 const SET = window.MCT_SETTINGS || {};
 const CONTACTS = SET.contacts || {};
+const OWNER = (SET.ownerEmail || '').toLowerCase();
+const KEY_COMPS = ['ikmc', 'challenge-me', 'steam-champions'];
 const STATUS = [{k:'Action needed',c:'action'},{k:'In progress',c:'progress'},{k:'Registered',c:'registered'},{k:'Planned',c:'planned'},{k:'Done',c:'done'},{k:'Closed',c:'closed'}];
 const PSTAT = ['Nominated','Registered','Training','Submitted','Qualified','Awarded','Withdrawn'];
 const PICK = {
@@ -49,6 +51,7 @@ function confirmDlg(title, body, yes = 'Remove') {
 const S = {
   tab: 'home', comps: [], templates: [], user: null,
   data: null, // private teacher document
+  role: null, verified: true, roles: { coordinators: [] }, summaries: [], ovComp: 'all', ovOpen: new Set(), unsubSum: null,
   pickComp: 'ikmc', rq: '', rclass: 'all', rsort: 'score', open: new Set(), calMonth: null, calSel: null, showDone: false
 };
 const blank = () => ({ displayName: '', actions: [], stepsDone: {}, compState: {}, roster: [], participants: [], updatedAt: now() });
@@ -71,7 +74,13 @@ function demoStore() {
     async reset() { throw new Error('Password reset needs Firebase. In demo mode just sign in with any password.'); },
     async load() { const o = read(); return o.doc || null; },
     async save(doc) { const o = read(); o.doc = doc; write(o); },
-    async updateName(n) { const o = read(); if (o.user) { o.user.displayName = n; write(o); } }
+    async updateName(n) { const o = read(); if (o.user) { o.user.displayName = n; write(o); } },
+    emailVerified: () => true,
+    async sendVerification() {}, async refreshUser() {},
+    async readRoles() { return read().roles || null; },
+    async writeRoles(r) { const o = read(); o.roles = r; write(o); },
+    async writeSummary(sm) { const o = read(); o.summary = sm; write(o); if (this._cb) this._cb([Object.assign({ uid: 'demo' }, sm)]); },
+    watchSummaries(cb, onErr) { this._cb = cb; const o = read(); cb(o.summary ? [Object.assign({ uid: 'demo' }, o.summary)] : []); return () => { this._cb = null; }; }
   };
 }
 
@@ -102,7 +111,14 @@ async function firebaseStore() {
     reset: email => wrap(auth.sendPasswordResetEmail(a, email)),
     async load() { const s = await wrap(fs.getDoc(ref())); return s.exists() ? s.data() : null; },
     save: doc => wrap(fs.setDoc(ref(), doc)),
-    updateName: n => wrap(auth.updateProfile(a.currentUser, { displayName: n }))
+    updateName: n => wrap(auth.updateProfile(a.currentUser, { displayName: n })),
+    emailVerified: () => !!a.currentUser?.emailVerified,
+    sendVerification: () => wrap(auth.sendEmailVerification(a.currentUser)),
+    async refreshUser() { await a.currentUser.reload(); await a.currentUser.getIdToken(true); },
+    async readRoles() { const d = await fs.getDoc(fs.doc(db, 'config', 'roles')); return d.exists() ? d.data() : null; },
+    writeRoles: r => wrap(fs.setDoc(fs.doc(db, 'config', 'roles'), r)),
+    writeSummary: sm => fs.setDoc(fs.doc(db, 'summaries', a.currentUser.uid), sm),
+    watchSummaries: (cb, onErr) => fs.onSnapshot(fs.collection(db, 'summaries'), snap => cb(snap.docs.map(d => Object.assign({ uid: d.id }, d.data()))), onErr)
   };
 }
 
@@ -112,7 +128,8 @@ function persist(immediate = false) {
   if (!S.data) return;
   S.data.updatedAt = now();
   clearTimeout(saveT);
-  const run = async () => { saving = true; try { await store.save(JSON.parse(JSON.stringify(S.data))); banner(''); } catch (e) { banner('Your last change could not be saved: ' + e.message); } saving = false; };
+  const run = async () => { saving = true; try { await store.save(JSON.parse(JSON.stringify(S.data))); banner(''); } catch (e) { banner('Your last change could not be saved: ' + e.message); } saving = false;
+    try { await store.writeSummary(buildSummary()); } catch (e) { /* summary is best-effort */ } };
   if (immediate) return run();
   saveT = setTimeout(run, 400);
 }
@@ -435,6 +452,87 @@ function viewComps() {
   return `<div class="panel-head"><h2>All competitions</h2><span class="hint">${f.length} this year · tap a card for details</span></div><div class="list">${f.map(card).join('')}</div>`;
 }
 
+
+/* ---------- Department summary (what the coordinator can see) ---------- */
+function buildSummary() {
+  const A = S.data.actions.filter(a => !a.done);
+  const late = A.filter(a => a.due && dleft(a.due) < 0), week = A.filter(a => a.due && dleft(a.due) >= 0 && dleft(a.due) <= 7);
+  const comps = {}; S.comps.forEach(c => { const st = myState(c); const steps = c.steps || []; comps[c.id] = { status: st.status, steps: [(S.data.stepsDone[c.id] || []).length, steps.length] }; });
+  return {
+    name: teacherName(), email: S.user.email || '', updatedAt: now(),
+    participants: S.data.participants.map(p => ({ compId: p.compId, student: p.student, cls: p.cls, status: p.status })),
+    actions: { open: A.length, late: late.length, week: week.length, lateTitles: late.map(a => ({ title: a.title, due: a.due })), weekTitles: week.map(a => ({ title: a.title, due: a.due })) },
+    comps, rosterSize: S.data.roster.length
+  };
+}
+const isAdmin = () => S.role === 'owner' || S.role === 'coordinator';
+async function resolveRole() {
+  const email = (S.user.email || '').toLowerCase();
+  S.role = null; S.verified = store.emailVerified();
+  if (store.demo) { S.role = 'owner'; S.roles = (await store.readRoles()) || { coordinators: [] }; return; }
+  if (!S.verified) { S.role = email === OWNER ? 'owner-unverified' : null; if (S.role) return; }
+  try { const r = await store.readRoles(); S.roles = r || { coordinators: [] }; S.role = email === OWNER ? 'owner' : (S.roles.coordinators || []).map(x => x.toLowerCase()).includes(email) ? 'coordinator' : null; }
+  catch { S.role = email === OWNER && S.verified ? 'owner' : null; }
+  if (S.role === 'owner' && !(await store.readRoles().catch(() => null))) { try { await store.writeRoles({ owner: OWNER, coordinators: [], updatedAt: now() }); } catch {} }
+}
+function startOverview() {
+  if (S.unsubSum) { S.unsubSum(); S.unsubSum = null; }
+  if (!isAdmin()) return;
+  S.unsubSum = store.watchSummaries(list => { S.summaries = list.sort((a, b) => (a.name || a.email) < (b.name || b.email) ? -1 : 1); if (S.tab === 'overview') render(); },
+    e => banner('The overview could not be loaded: ' + (e.message || e.code)));
+}
+function teacherLabel(t) { return t.name || (t.email || '').split('@')[0] || 'Unnamed teacher'; }
+function remindDraft(t) {
+  const me = teacherName() || '[Your name]';
+  const lateL = (t.actions?.lateTitles || []).map(a => `• ${a.title} (was due ${fmt(a.due)})`).join('\n');
+  const weekL = (t.actions?.weekTitles || []).map(a => `• ${a.title} (by ${fmt(a.due)})`).join('\n');
+  const missing = KEY_COMPS.filter(id => comp(id) && !(t.participants || []).some(p => p.compId === id)).map(id => `• ${compShort(comp(id))}: no students entered yet`).join('\n');
+  const parts = [];
+  if (lateL) parts.push('Overdue:\n' + lateL); if (weekL) parts.push('Due this week:\n' + weekL); if (missing) parts.push('Still needed:\n' + missing);
+  const body = `Dear ${teacherLabel(t)},\n\nA quick reminder from the competitions tracker.\n\n${parts.join('\n\n') || 'Everything looks up to date — thank you.'}\n\nYou can tick each step in the tracker: ${location.origin}${location.pathname}\n\nBest regards,\n${me}`;
+  return { to: [t.email], cc: [], subject: 'Math competitions – your next steps', body };
+}
+function openRemind(uid) {
+  const t = S.summaries.find(x => x.uid === uid); if (!t) return; const d = remindDraft(t); mailCtx = { actId: null };
+  $('mTitle').textContent = d.subject; $('mTo').value = d.to.join('; '); $('mCc').value = ''; $('mSubj').value = d.subject; $('mBody').value = d.body; $('mWarn').hidden = true; $('mDone').hidden = true; updateMailto(); $('mailDlg').showModal();
+}
+function exportOverviewCsv() {
+  const rows = [['Teacher', 'Email', 'Competition', 'Student', 'Class', 'Status']];
+  S.summaries.forEach(t => (t.participants || []).forEach(p => rows.push([teacherLabel(t), t.email, comp(p.compId)?.name || p.compId, p.student, p.cls, p.status])));
+  const csv = rows.map(r => r.map(v => '"' + String(v ?? '').replace(/"/g, '""') + '"').join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'competition-participants.csv'; document.body.appendChild(a); a.click(); a.remove(); toast('CSV downloaded');
+}
+function viewOverview() {
+  if (S.role === 'owner-unverified') return `<section class="panel"><h2>Department overview</h2><p>To protect teachers' data, the overview opens only after your email address is verified.</p><div class="btn-row two"><button class="btn primary" type="button" id="sendVerify">Send verification email</button><button class="btn" type="button" id="recheckVerify">I have clicked the link</button></div><p class="hint">Check your inbox and junk folder for a message from Firebase, click the link, then come back here.</p></section>`;
+  const T = S.summaries, all = T.flatMap(t => (t.participants || []).map(p => Object.assign({ teacher: t }, p)));
+  const active = S.comps.filter(c => all.some(p => p.compId === c.id));
+  const sel = S.ovComp === 'all' ? all : all.filter(p => p.compId === S.ovComp);
+  const chips = `<div class="chips" role="tablist"><button type="button" class="chip ${S.ovComp === 'all' ? 'on' : ''}" data-ov="all">All competitions<span class="n">${all.length}</span></button>${active.map(c => `<button type="button" class="chip ${S.ovComp === c.id ? 'on' : ''}" data-ov="${c.id}">${esc(compShort(c))}<span class="n">${all.filter(p => p.compId === c.id).length}</span></button>`).join('')}</div>`;
+  const stats = `<div class="stats"><div class="stat"><b>${T.length}</b><span>teachers signed up</span></div><div class="stat"><b>${new Set(all.map(p => p.teacher.uid + '|' + p.student)).size}</b><span>students entered</span></div><div class="stat"><b>${active.length}</b><span>competitions with students</span></div><div class="stat"><b>${T.filter(t => (t.actions?.late || 0) > 0).length}</b><span>teachers with late actions</span></div></div>`;
+  const byComp = (S.ovComp === 'all' ? active : active.filter(c => c.id === S.ovComp)).map(c => {
+    const ps = all.filter(p => p.compId === c.id); const byT = {}; ps.forEach(p => (byT[p.teacher.uid] = byT[p.teacher.uid] || { t: p.teacher, ps: [] }).ps.push(p));
+    const open = S.ovOpen.has('c' + c.id);
+    return `<article class="card s-${scls(c.status)}"><button class="head" type="button" data-ovtoggle="c${c.id}" aria-expanded="${open}"><span class="mark"></span><div style="min-width:0"><h3>${esc(c.name)}</h3><div class="meta"><span>${ps.length} student${ps.length === 1 ? '' : 's'}</span><span>${Object.keys(byT).length} teacher${Object.keys(byT).length === 1 ? '' : 's'}</span></div></div><span class="hint">${open ? 'Hide' : 'Open'}</span></button>
+      ${open ? `<div class="body" style="grid-template-columns:1fr">${Object.values(byT).map(g => `<div><h4>${esc(teacherLabel(g.t))} · ${g.ps.length}</h4><ul class="sel">${g.ps.map(p => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(p.student)}<small>${esc(p.cls)}</small></span><span class="pill p-progress">${esc(p.status)}</span></li>`).join('')}</ul></div>`).join('')}</div>` : ''}</article>`;
+  }).join('') || '<p class="empty">No students entered yet.</p>';
+  const byTeacher = T.map(t => {
+    const ps = (t.participants || []).filter(p => S.ovComp === 'all' || p.compId === S.ovComp); const open = S.ovOpen.has('t' + t.uid);
+    const missing = KEY_COMPS.filter(id => comp(id) && !(t.participants || []).some(p => p.compId === id));
+    const lateN = t.actions?.late || 0;
+    return `<article class="card ${lateN ? 's-action' : 's-done'}"><button class="head" type="button" data-ovtoggle="t${t.uid}" aria-expanded="${open}"><span class="mark"></span><div style="min-width:0"><h3>${esc(teacherLabel(t))}</h3><div class="meta"><span>${esc(t.email || '')}</span><span>${ps.length} student${ps.length === 1 ? '' : 's'}</span><span>${(n => n + ' competition' + (n === 1 ? '' : 's'))(new Set((t.participants || []).map(p => p.compId)).size)}</span><span>${t.actions?.open ?? 0} open${lateN ? `, <b style="color:var(--red)">${lateN} late</b>` : ''}</span><span>updated ${t.updatedAt ? fmt(t.updatedAt.slice(0, 10)) : '—'}</span></div></div><span class="hint">${open ? 'Hide' : 'Open'}</span></button>
+      ${open ? `<div class="body"><div class="sec">${ps.length ? `<h4>Students</h4><ul class="sel">${ps.map(p => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(p.student)}<small>${esc(p.cls)} · ${esc(compShort(comp(p.compId) || { name: p.compId }))}</small></span><span class="pill p-progress">${esc(p.status)}</span></li>`).join('')}</ul>` : '<p class="hint">No students entered yet.</p>'}</div>
+        <div class="sec">${(t.actions?.lateTitles || []).length ? `<div><h4>Overdue</h4><ul class="src" style="color:var(--red)">${t.actions.lateTitles.map(a => `<li>${esc(a.title)} · ${esc(fmt(a.due))}</li>`).join('')}</ul></div>` : ''}
+        ${missing.length ? `<div><h4>Still needed</h4><ul class="src">${missing.map(id => `<li>${esc(compShort(comp(id)))}: no students yet</li>`).join('')}</ul></div>` : ''}
+        <div class="btn-row n1"><button class="btn primary" type="button" data-remind="${t.uid}">Write reminder email</button></div></div></div>` : ''}</article>`;
+  }).join('') || '<p class="empty">No teachers have signed up yet.</p>';
+  const roles = S.role === 'owner' ? `<section class="panel"><h2>Who can see this overview</h2><p class="hint">You, as owner, plus the coordinators below. They see students' names, classes and competition status for every teacher, but never class lists, scores or private notes.</p>
+    <ul class="sel">${(S.roles.coordinators || []).map(e => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(e)}</span><button class="btn small ghost" type="button" data-delcoord="${esc(e)}">Remove</button></li>`).join('') || '<li class="hint">No coordinators yet.</li>'}</ul>
+    <form id="addCoord" class="addact" style="border:0;padding:0;grid-template-columns:minmax(0,1fr) auto"><div class="field"><label for="coordEmail">Add a coordinator by school email</label><input id="coordEmail" type="email" placeholder="name@actvet.gov.ae" required></div><button class="btn" type="submit">Add</button></form></section>` : '';
+  return `<div class="panel-head"><h2>Department overview</h2><span class="hint">Updates live as teachers save</span></div>${stats}${chips}
+    <div class="cols"><section class="panel"><div class="panel-head"><h2>By competition</h2></div><div class="list">${byComp}</div></section>
+    <section class="panel"><div class="panel-head"><h2>By teacher</h2><button class="btn small" type="button" id="ovCsv">Download CSV</button></div><div class="list">${byTeacher}</div></section></div>${roles}`;
+}
+
 /* ---------- render & events ---------- */
 let pending = false;
 function render() {
@@ -443,19 +541,21 @@ function render() {
   if (a && $('view').contains(a) && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.type !== 'checkbox' && a.id !== 'rq') { pending = true; return; }
   pending = false;
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === S.tab));
+  const showOv = isAdmin() || S.role === 'owner-unverified'; $('ovTab').hidden = !showOv; document.querySelector('.tabs').classList.toggle('four', showOv);
+  if (S.tab === 'overview' && !showOv) S.tab = 'home';
   const late = S.data.actions.filter(x => !x.done && x.due && dleft(x.due) <= 7).length; $('homeCnt').hidden = !late; $('homeCnt').textContent = late;
   const keep = a && a.id === 'rq' ? { pos: a.selectionStart } : null;
-  $('view').innerHTML = S.tab === 'home' ? viewHome() : S.tab === 'students' ? viewStudents() : viewComps();
+  $('view').innerHTML = S.tab === 'home' ? viewHome() : S.tab === 'students' ? viewStudents() : S.tab === 'overview' ? viewOverview() : viewComps();
   if (keep && $('rq')) { $('rq').focus(); $('rq').setSelectionRange(keep.pos, keep.pos); }
   $('userInitials').textContent = (teacherName() || S.user.email || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
 }
 $('view').addEventListener('focusout', () => setTimeout(() => { if (pending) render(); }, 0));
 function go(tab) { S.tab = tab; try { history.replaceState(null, '', '#' + tab); } catch { location.hash = tab; } render(); window.scrollTo({ top: 0 }); }
 document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => go(t.dataset.tab)));
-window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['home', 'students', 'competitions'].includes(h) && h !== S.tab) { S.tab = h; render(); } });
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['home', 'students', 'competitions', 'overview'].includes(h) && h !== S.tab) { S.tab = h; render(); } });
 
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],[data-delclass],#delAllStu,#pickClassHint,#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
+  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],[data-delclass],[data-ov],[data-ovtoggle],[data-remind],[data-delcoord],#ovCsv,#sendVerify,#recheckVerify,#delAllStu,#pickClassHint,#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
   const d = t.dataset;
   if (d.toggle) { S.open.has(d.toggle) ? S.open.delete(d.toggle) : S.open.add(d.toggle); render(); }
   else if (d.pc) { S.pickComp = d.pc; render(); }
@@ -478,6 +578,13 @@ document.addEventListener('click', async e => {
   else if (t.id === 'togDone') { S.showDone = !S.showDone; render(); }
   else if (t.id === 'icsBtn') downloadIcs();
   else if (t.id === 'addStudentBtn') openStudent(null);
+  else if (d.ov) { S.ovComp = d.ov; render(); }
+  else if (d.ovtoggle) { S.ovOpen.has(d.ovtoggle) ? S.ovOpen.delete(d.ovtoggle) : S.ovOpen.add(d.ovtoggle); render(); }
+  else if (d.remind) openRemind(d.remind);
+  else if (t.id === 'ovCsv') exportOverviewCsv();
+  else if (d.delcoord) { if (await confirmDlg('Remove ' + d.delcoord + '?', 'They will no longer see the department overview.')) { S.roles.coordinators = (S.roles.coordinators || []).filter(e => e !== d.delcoord); S.roles.updatedAt = now(); try { await store.writeRoles(S.roles); toast('Removed'); } catch (e) { banner(e.message); } render(); } }
+  else if (t.id === 'sendVerify') { try { await store.sendVerification(); toast('Verification email sent'); } catch (e) { banner(e.message); } }
+  else if (t.id === 'recheckVerify') { try { await store.refreshUser(); } catch {} await resolveRole(); startOverview(); render(); if (!isAdmin()) toast('Not verified yet. Click the link in the email first.'); }
   else if (t.id === 'importBtn') openImport();
 });
 document.addEventListener('change', async e => {
@@ -492,7 +599,9 @@ document.addEventListener('change', async e => {
   else if (t.id === 'rsort') { S.rsort = t.value; render(); }
 });
 let rqT; document.addEventListener('input', e => { if (e.target.id === 'rq') { clearTimeout(rqT); rqT = setTimeout(() => { S.rq = e.target.value.trim().toLowerCase(); render(); }, 150); } });
-document.addEventListener('submit', e => {
+document.addEventListener('submit', async e => {
+  if (e.target.id === 'addCoord') { e.preventDefault(); const em = $('coordEmail').value.trim().toLowerCase(); if (!em) return; if (em === OWNER || (S.roles.coordinators || []).includes(em)) { toast('Already has access'); return; }
+    S.roles.coordinators = [...(S.roles.coordinators || []), em]; S.roles.owner = OWNER; S.roles.updatedAt = now(); try { await store.writeRoles(S.roles); toast('Added ' + em); } catch (err) { banner(err.message); } render(); return; }
   if (e.target.id === 'addAct') { e.preventDefault(); const t = $('aaT').value.trim(), dd = $('aaD').value; if (!t || !dd) return; S.data.actions.push({ id: 'c' + uid(), title: t, due: dd, done: false, custom: true }); persist(); render(); toast('Reminder added'); }
 });
 
@@ -550,10 +659,12 @@ async function enter(user) {
   S.templates.forEach(t => { if (!seen.has(t.id)) S.data.actions.push(Object.assign({}, t, { done: false, hidden: false })); });
   if (fresh) persist();
   $('authView').hidden = true; $('app').hidden = false;
-  const h = location.hash.slice(1); if (['home', 'students', 'competitions'].includes(h)) S.tab = h;
+  await resolveRole(); startOverview();
+  const h = location.hash.slice(1); if (['home', 'students', 'competitions', 'overview'].includes(h)) S.tab = h;
   render();
+  if (!fresh) store.writeSummary(buildSummary()).catch(() => {});
 }
-function leave() { S.user = null; S.data = null; $('app').hidden = true; $('authView').hidden = false; $('auPass').value = ''; }
+function leave() { if (S.unsubSum) { S.unsubSum(); S.unsubSum = null; } S.role = null; S.summaries = []; S.user = null; S.data = null; $('app').hidden = true; $('authView').hidden = false; $('auPass').value = ''; }
 
 (async () => {
   $('schoolLine').textContent = (SET.schoolLine || '').split('·').slice(0, 2).map(x => x.trim()).join(' · '); $('schoolLine2').textContent = (SET.schoolLine || '').split('·')[0].trim();
