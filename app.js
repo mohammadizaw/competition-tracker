@@ -80,6 +80,7 @@ function demoStore() {
     async readRoles() { return read().roles || null; },
     async writeRoles(r) { const o = read(); o.roles = r; write(o); },
     async writeSummary(sm) { const o = read(); o.summary = sm; write(o); if (this._cb) this._cb([Object.assign({ uid: 'demo' }, sm)]); },
+    async deleteAccount() { const o = read(); delete o.user; delete o.doc; delete o.summary; write(o); cb(null); },
     watchSummaries(cb, onErr) { this._cb = cb; const o = read(); cb(o.summary ? [Object.assign({ uid: 'demo' }, o.summary)] : []); return () => { this._cb = null; }; }
   };
 }
@@ -118,6 +119,13 @@ async function firebaseStore() {
     async readRoles() { const d = await fs.getDoc(fs.doc(db, 'config', 'roles')); return d.exists() ? d.data() : null; },
     writeRoles: r => wrap(fs.setDoc(fs.doc(db, 'config', 'roles'), r)),
     writeSummary: sm => fs.setDoc(fs.doc(db, 'summaries', a.currentUser.uid), sm),
+    async deleteAccount(pass) {
+      const u = a.currentUser;
+      await wrap(auth.reauthenticateWithCredential(u, auth.EmailAuthProvider.credential(u.email, pass)));
+      await wrap(fs.deleteDoc(fs.doc(db, 'users', u.uid, 'private', 'tracker')));
+      await fs.deleteDoc(fs.doc(db, 'summaries', u.uid)).catch(() => {});
+      await wrap(auth.deleteUser(u));
+    },
     watchSummaries: (cb, onErr) => fs.onSnapshot(fs.collection(db, 'summaries'), snap => cb(snap.docs.map(d => Object.assign({ uid: d.id }, d.data()))), onErr)
   };
 }
@@ -645,6 +653,17 @@ applyTheme((() => { try { return localStorage.getItem('mct-theme') || 'auto'; } 
 $('userBtn').addEventListener('click', () => { $('acName').value = teacherName(); $('acEmail').textContent = S.user.email; $('acShare').checked = S.data.share === true; $('accountDlg').showModal(); });
 $('acShare').addEventListener('change', () => setShare($('acShare').checked));
 $('accountForm').addEventListener('submit', async e => { e.preventDefault(); S.data.displayName = $('acName').value.trim(); persist(); try { await store.updateName(S.data.displayName); } catch {} $('accountDlg').close(); render(); toast('Saved'); });
+$('delAccBtn').addEventListener('click', () => { $('accountDlg').close(); $('delPass').value = ''; $('delMsg').textContent = ''; $('deleteDlg').showModal(); });
+$('delCancel').addEventListener('click', () => $('deleteDlg').close());
+$('deleteForm').addEventListener('submit', async e => {
+  e.preventDefault(); const m = $('delMsg'); const pass = $('delPass').value;
+  if (!pass && !store.demo) { m.textContent = 'Please enter your password.'; m.className = 'msg err'; return; }
+  $('delGo').disabled = true; m.textContent = 'Deleting…'; m.className = 'msg';
+  clearTimeout(saveT); saveT = null;
+  try { await store.deleteAccount(pass); $('deleteDlg').close(); toast('Your account was deleted'); }
+  catch (err) { m.textContent = err.message; m.className = 'msg err'; }
+  $('delGo').disabled = false;
+});
 $('signOutBtn').addEventListener('click', async () => { $('accountDlg').close(); await persist(true); await store.signOut(); });
 
 /* ---------- auth screen ---------- */

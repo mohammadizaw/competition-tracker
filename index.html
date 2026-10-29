@@ -171,6 +171,20 @@
       <button type="button" class="btn danger-ghost" id="signOutBtn">Sign out</button>
       <button type="submit" class="btn primary">Save</button>
     </div>
+    <button type="button" class="btn ghost small" id="delAccBtn" style="justify-self:center;color:var(--red)">Delete my account…</button>
+  </form>
+</dialog>
+
+<dialog id="deleteDlg" class="dlg small">
+  <form id="deleteForm" class="stack" novalidate>
+    <h2>Delete your account</h2>
+    <p class="hint">This permanently removes your students, picks, notes, reminders and your summary in the overview, then deletes your login. It cannot be undone.</p>
+    <div class="field"><label for="delPass">Enter your password to confirm</label><input id="delPass" type="password" autocomplete="current-password" required></div>
+    <p id="delMsg" class="msg"></p>
+    <div class="btn-row two">
+      <button type="button" class="btn" id="delCancel">Cancel</button>
+      <button type="submit" class="btn danger" id="delGo">Delete everything</button>
+    </div>
   </form>
 </dialog>
 
