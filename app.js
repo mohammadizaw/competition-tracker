@@ -467,12 +467,15 @@ function buildSummary() {
 const isAdmin = () => S.role === 'owner' || S.role === 'coordinator';
 async function resolveRole() {
   const email = (S.user.email || '').toLowerCase();
-  S.role = null; S.verified = store.emailVerified();
-  if (store.demo) { S.role = 'owner'; S.roles = (await store.readRoles()) || { coordinators: [] }; return; }
-  if (!S.verified) { S.role = email === OWNER ? 'owner-unverified' : null; if (S.role) return; }
-  try { const r = await store.readRoles(); S.roles = r || { coordinators: [] }; S.role = email === OWNER ? 'owner' : (S.roles.coordinators || []).map(x => x.toLowerCase()).includes(email) ? 'coordinator' : null; }
-  catch { S.role = email === OWNER && S.verified ? 'owner' : null; }
-  if (S.role === 'owner' && !(await store.readRoles().catch(() => null))) { try { await store.writeRoles({ owner: OWNER, coordinators: [], updatedAt: now() }); } catch {} }
+  S.role = null;
+  if (store.demo) { S.role = 'owner'; S.roles = (await store.readRoles()) || { coordinatorUids: [], coordinators: {} }; return; }
+  if (email === OWNER) {
+    S.role = 'owner';
+    try { S.roles = (await store.readRoles()) || null; } catch { S.roles = null; }
+    if (!S.roles) { S.roles = { owner: OWNER, coordinatorUids: [], coordinators: {}, updatedAt: now() }; try { await store.writeRoles(S.roles); } catch {} }
+    return;
+  }
+  try { const r = await store.readRoles(); if (r && (r.coordinatorUids || []).includes(S.user.uid)) { S.role = 'coordinator'; S.roles = r; } } catch { /* not a coordinator */ }
 }
 function startOverview() {
   if (S.unsubSum) { S.unsubSum(); S.unsubSum = null; }
@@ -504,7 +507,6 @@ function exportOverviewCsv() {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'competition-participants.csv'; document.body.appendChild(a); a.click(); a.remove(); toast('CSV downloaded');
 }
 function viewOverview() {
-  if (S.role === 'owner-unverified') return `<section class="panel"><h2>Department overview</h2><p>To protect teachers' data, the overview opens only after your email address is verified.</p><div class="btn-row two"><button class="btn primary" type="button" id="sendVerify">Send verification email</button><button class="btn" type="button" id="recheckVerify">I have clicked the link</button></div><p class="hint">Check your inbox and junk folder for a message from Firebase, click the link, then come back here.</p></section>`;
   const T = S.summaries, all = T.flatMap(t => (t.participants || []).map(p => Object.assign({ teacher: t }, p)));
   const active = S.comps.filter(c => all.some(p => p.compId === c.id));
   const sel = S.ovComp === 'all' ? all : all.filter(p => p.compId === S.ovComp);
@@ -537,9 +539,10 @@ function viewOverview() {
       ${open ? `<div class="body" style="grid-template-columns:1fr">${ps.length ? `<ul class="sel">${ps.map(p => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(p.student)}<small>${esc(p.cls)} · ${esc(compShort(comp(p.compId) || { name: p.compId }))}</small></span><span class="pill p-progress">${esc(p.status)}</span></li>`).join('')}</ul>` : '<p class="hint">No students entered yet.</p>'}
         <div class="btn-row n1"><button class="btn" type="button" data-remind="${t.uid}">Write next-steps email</button></div></div>` : ''}</article>`;
   }).join('') || '<p class="empty">No teachers have signed up yet.</p>';
-  const roles = S.role === 'owner' ? `<section class="panel"><h2>Who can see this overview</h2><p class="hint">You, as owner, plus the coordinators below. They see students' names, classes and competition status for every teacher, but never class lists, scores or private notes.</p>
-    <ul class="sel">${(S.roles.coordinators || []).map(e => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(e)}</span><button class="btn small ghost" type="button" data-delcoord="${esc(e)}">Remove</button></li>`).join('') || '<li class="hint">No coordinators yet.</li>'}</ul>
-    <form id="addCoord" class="addact" style="border:0;padding:0;grid-template-columns:minmax(0,1fr) auto"><div class="field"><label for="coordEmail">Add a coordinator by school email</label><input id="coordEmail" type="email" placeholder="name@actvet.gov.ae" required></div><button class="btn" type="submit">Add</button></form></section>` : '';
+  const coordUids = S.roles?.coordinatorUids || [];
+  const others = T.filter(t => t.uid !== S.user.uid && (t.email || '').toLowerCase() !== OWNER);
+  const roles = S.role === 'owner' ? `<section class="panel"><h2>Who can see this overview</h2><p class="hint">You, as owner, plus any teacher you give access to below. Coordinators see students' names, classes and competition status for every teacher, but never class lists, scores or private notes. Only teachers who have already signed up can be chosen.</p>
+    ${others.length ? `<ul class="sel">${others.map(t => { const on = coordUids.includes(t.uid); return `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(teacherLabel(t))}<small>${esc(t.email || '')}${on ? ' · coordinator' : ''}</small></span><button class="btn small ${on ? 'ghost' : ''}" type="button" data-coord="${t.uid}" data-on="${on ? 1 : 0}">${on ? 'Remove access' : 'Give access'}</button></li>`; }).join('')}</ul>` : '<p class="hint">No other teachers have signed up yet. Once a colleague creates an account, they appear here.</p>'}</section>` : '';
   return `<div class="panel-head"><h2>Department overview</h2><button class="btn small" type="button" id="ovCsv">Download CSV</button></div>${stats}${chips}
     <section class="panel"><div class="panel-head"><h2>Students entered, by teacher and competition</h2><span class="hint">Teachers choose which competitions to join</span></div>${matrix}</section>
     <div class="cols">${statusPanel}${classPanel}</div>
@@ -555,7 +558,7 @@ function render() {
   if (a && $('view').contains(a) && /^(INPUT|TEXTAREA)$/.test(a.tagName) && a.type !== 'checkbox' && a.id !== 'rq') { pending = true; return; }
   pending = false;
   document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === S.tab));
-  const showOv = isAdmin() || S.role === 'owner-unverified'; $('ovTab').hidden = !showOv; document.querySelector('.tabs').classList.toggle('four', showOv);
+  const showOv = isAdmin(); $('ovTab').hidden = !showOv; document.querySelector('.tabs').classList.toggle('four', showOv);
   if (S.tab === 'overview' && !showOv) S.tab = 'home';
   const late = S.data.actions.filter(x => !x.done && x.due && dleft(x.due) <= 7).length; $('homeCnt').hidden = !late; $('homeCnt').textContent = late;
   const keep = a && a.id === 'rq' ? { pos: a.selectionStart } : null;
@@ -569,7 +572,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
 window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['home', 'students', 'competitions', 'overview'].includes(h) && h !== S.tab) { S.tab = h; render(); } });
 
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],[data-delclass],[data-ov],[data-ovtoggle],[data-remind],[data-delcoord],#ovCsv,#sendVerify,#recheckVerify,#delAllStu,#pickClassHint,#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
+  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],[data-delclass],[data-ov],[data-ovtoggle],[data-remind],[data-coord],#ovCsv,#delAllStu,#pickClassHint,#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
   const d = t.dataset;
   if (d.toggle) { S.open.has(d.toggle) ? S.open.delete(d.toggle) : S.open.add(d.toggle); render(); }
   else if (d.pc) { S.pickComp = d.pc; render(); }
@@ -596,7 +599,10 @@ document.addEventListener('click', async e => {
   else if (d.ovtoggle) { S.ovOpen.has(d.ovtoggle) ? S.ovOpen.delete(d.ovtoggle) : S.ovOpen.add(d.ovtoggle); render(); }
   else if (d.remind) openRemind(d.remind);
   else if (t.id === 'ovCsv') exportOverviewCsv();
-  else if (d.delcoord) { if (await confirmDlg('Remove ' + d.delcoord + '?', 'They will no longer see the department overview.')) { S.roles.coordinators = (S.roles.coordinators || []).filter(e => e !== d.delcoord); S.roles.updatedAt = now(); try { await store.writeRoles(S.roles); toast('Removed'); } catch (e) { banner(e.message); } render(); } }
+  else if (d.coord) { const t = S.summaries.find(x => x.uid === d.coord); const on = d.on === '1'; const uids = new Set(S.roles.coordinatorUids || []); on ? uids.delete(d.coord) : uids.add(d.coord);
+    const emails = Object.assign({}, S.roles.coordinators || {}); if (on) delete emails[d.coord]; else emails[d.coord] = t?.email || '';
+    const next = Object.assign({}, S.roles, { owner: OWNER, coordinatorUids: [...uids], coordinators: emails, updatedAt: now() });
+    try { await store.writeRoles(next); S.roles = next; toast(on ? 'Access removed' : 'Access given'); } catch (e) { banner(e.message); } render(); }
   else if (t.id === 'sendVerify') { try { await store.sendVerification(); toast('Verification email sent'); } catch (e) { banner(e.message); } }
   else if (t.id === 'recheckVerify') { try { await store.refreshUser(); } catch {} await resolveRole(); startOverview(); render(); if (!isAdmin()) toast('Not verified yet. Click the link in the email first.'); }
   else if (t.id === 'importBtn') openImport();
@@ -614,8 +620,6 @@ document.addEventListener('change', async e => {
 });
 let rqT; document.addEventListener('input', e => { if (e.target.id === 'rq') { clearTimeout(rqT); rqT = setTimeout(() => { S.rq = e.target.value.trim().toLowerCase(); render(); }, 150); } });
 document.addEventListener('submit', async e => {
-  if (e.target.id === 'addCoord') { e.preventDefault(); const em = $('coordEmail').value.trim().toLowerCase(); if (!em) return; if (em === OWNER || (S.roles.coordinators || []).includes(em)) { toast('Already has access'); return; }
-    S.roles.coordinators = [...(S.roles.coordinators || []), em]; S.roles.owner = OWNER; S.roles.updatedAt = now(); try { await store.writeRoles(S.roles); toast('Added ' + em); } catch (err) { banner(err.message); } render(); return; }
   if (e.target.id === 'addAct') { e.preventDefault(); const t = $('aaT').value.trim(), dd = $('aaD').value; if (!t || !dd) return; S.data.actions.push({ id: 'c' + uid(), title: t, due: dd, done: false, custom: true }); persist(); render(); toast('Reminder added'); }
 });
 

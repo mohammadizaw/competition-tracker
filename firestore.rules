@@ -1,15 +1,12 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ---- who is who ----
     function signedIn() { return request.auth != null; }
-    function email() { return request.auth.token.email.lower(); }
-    function verified() { return request.auth.token.email_verified == true; }
-    function isOwner() { return signedIn() && verified() && email() == 'mohammad.awaad@actvet.gov.ae'; }
+    function isOwner() { return signedIn() && request.auth.token.email.lower() == 'mohammad.awaad@actvet.gov.ae'; }
     function isCoordinator() {
-      return signedIn() && verified()
+      return signedIn()
              && exists(/databases/$(database)/documents/config/roles)
-             && email() in get(/databases/$(database)/documents/config/roles).data.coordinators;
+             && request.auth.uid in get(/databases/$(database)/documents/config/roles).data.coordinatorUids;
     }
     function isAdmin() { return isOwner() || isCoordinator(); }
 
@@ -17,15 +14,12 @@ service cloud.firestore {
     match /users/{userId}/{document=**} {
       allow read, write: if signedIn() && request.auth.uid == userId;
     }
-
-    // Each teacher's summary (students entered, statuses, late actions): written by the teacher,
-    // readable by the teacher, the owner and the coordinators.
+    // Each teacher's summary: written by the teacher, readable by the teacher, the owner and coordinators.
     match /summaries/{userId} {
       allow write: if signedIn() && request.auth.uid == userId;
       allow read: if (signedIn() && request.auth.uid == userId) || isAdmin();
     }
-
-    // The list of coordinators: only the owner can change it.
+    // Coordinator list: only the owner can change it.
     match /config/roles {
       allow read: if isAdmin();
       allow write: if isOwner();
