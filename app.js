@@ -456,12 +456,11 @@ function viewComps() {
 /* ---------- Department summary (what the coordinator can see) ---------- */
 function buildSummary() {
   const A = S.data.actions.filter(a => !a.done);
-  const late = A.filter(a => a.due && dleft(a.due) < 0), week = A.filter(a => a.due && dleft(a.due) >= 0 && dleft(a.due) <= 7);
   const comps = {}; S.comps.forEach(c => { const st = myState(c); const steps = c.steps || []; comps[c.id] = { status: st.status, steps: [(S.data.stepsDone[c.id] || []).length, steps.length] }; });
   return {
     name: teacherName(), email: S.user.email || '', updatedAt: now(),
     participants: S.data.participants.map(p => ({ compId: p.compId, student: p.student, cls: p.cls, status: p.status })),
-    actions: { open: A.length, late: late.length, week: week.length, lateTitles: late.map(a => ({ title: a.title, due: a.due })), weekTitles: week.map(a => ({ title: a.title, due: a.due })) },
+    actions: { open: A.length },
     comps, rosterSize: S.data.roster.length
   };
 }
@@ -484,13 +483,15 @@ function startOverview() {
 function teacherLabel(t) { return t.name || (t.email || '').split('@')[0] || 'Unnamed teacher'; }
 function remindDraft(t) {
   const me = teacherName() || '[Your name]';
-  const lateL = (t.actions?.lateTitles || []).map(a => `• ${a.title} (was due ${fmt(a.due)})`).join('\n');
-  const weekL = (t.actions?.weekTitles || []).map(a => `• ${a.title} (by ${fmt(a.due)})`).join('\n');
-  const missing = KEY_COMPS.filter(id => comp(id) && !(t.participants || []).some(p => p.compId === id)).map(id => `• ${compShort(comp(id))}: no students entered yet`).join('\n');
-  const parts = [];
-  if (lateL) parts.push('Overdue:\n' + lateL); if (weekL) parts.push('Due this week:\n' + weekL); if (missing) parts.push('Still needed:\n' + missing);
-  const body = `Dear ${teacherLabel(t)},\n\nA quick reminder from the competitions tracker.\n\n${parts.join('\n\n') || 'Everything looks up to date — thank you.'}\n\nYou can tick each step in the tracker: ${location.origin}${location.pathname}\n\nBest regards,\n${me}`;
-  return { to: [t.email], cc: [], subject: 'Math competitions – your next steps', body };
+  const byC = {}; (t.participants || []).forEach(p => (byC[p.compId] = byC[p.compId] || []).push(p));
+  const blocks = Object.keys(byC).map(id => {
+    const c = comp(id); if (!c) return '';
+    const done = t.comps?.[id]?.steps?.[0] || 0; const next = (c.steps || [])[done];
+    const upcoming = (c.dates || []).filter(x => x.date && dleft(x.date) >= 0 && dleft(x.date) <= 90).slice(0, 2).map(x => `${fmt(x.date)} – ${x.label}`);
+    return `${c.name}\nStudents: ${byC[id].map(p => `${p.student} (${p.cls}, ${p.status})`).join('; ')}` + (next ? `\nNext step: ${next}` : '') + (upcoming.length ? `\nComing up: ${upcoming.join('; ')}` : '');
+  }).filter(Boolean).join('\n\n');
+  const body = `Dear ${teacherLabel(t)},\n\nThank you for your competition entries. Here is a summary from the tracker with the next step for each one.\n\n${blocks || 'No students entered yet. When you are ready, add them under Students in the tracker.'}\n\nYou can tick each step in the tracker: ${location.origin}${location.pathname}\n\nBest regards,\n${me}`;
+  return { to: [t.email], cc: [], subject: 'Math competitions – summary and next steps', body };
 }
 function openRemind(uid) {
   const t = S.summaries.find(x => x.uid === uid); if (!t) return; const d = remindDraft(t); mailCtx = { actId: null };
@@ -507,8 +508,22 @@ function viewOverview() {
   const T = S.summaries, all = T.flatMap(t => (t.participants || []).map(p => Object.assign({ teacher: t }, p)));
   const active = S.comps.filter(c => all.some(p => p.compId === c.id));
   const sel = S.ovComp === 'all' ? all : all.filter(p => p.compId === S.ovComp);
-  const chips = `<div class="chips" role="tablist"><button type="button" class="chip ${S.ovComp === 'all' ? 'on' : ''}" data-ov="all">All competitions<span class="n">${all.length}</span></button>${active.map(c => `<button type="button" class="chip ${S.ovComp === c.id ? 'on' : ''}" data-ov="${c.id}">${esc(compShort(c))}<span class="n">${all.filter(p => p.compId === c.id).length}</span></button>`).join('')}</div>`;
-  const stats = `<div class="stats"><div class="stat"><b>${T.length}</b><span>teachers signed up</span></div><div class="stat"><b>${new Set(all.map(p => p.teacher.uid + '|' + p.student)).size}</b><span>students entered</span></div><div class="stat"><b>${active.length}</b><span>competitions with students</span></div><div class="stat"><b>${T.filter(t => (t.actions?.late || 0) > 0).length}</b><span>teachers with late actions</span></div></div>`;
+  const n = (arr, f) => arr.filter(f).length;
+  const chips = `<div class="chips" role="tablist"><button type="button" class="chip ${S.ovComp === 'all' ? 'on' : ''}" data-ov="all">All competitions<span class="n">${all.length}</span></button>${active.map(c => `<button type="button" class="chip ${S.ovComp === c.id ? 'on' : ''}" data-ov="${c.id}">${esc(compShort(c))}<span class="n">${n(all, p => p.compId === c.id)}</span></button>`).join('')}</div>`;
+  const stats = `<div class="stats"><div class="stat"><b>${T.length}</b><span>teachers</span></div><div class="stat"><b>${new Set(sel.map(p => p.teacher.uid + '|' + p.student)).size}</b><span>students</span></div><div class="stat"><b>${sel.length}</b><span>entries</span></div><div class="stat"><b>${S.ovComp === 'all' ? active.length : new Set(sel.map(p => p.teacher.uid)).size}</b><span>${S.ovComp === 'all' ? 'competitions' : 'teachers in it'}</span></div></div>`;
+  // Matrix: teachers x competitions
+  const matrix = active.length ? `<div class="tbl"><table><thead><tr><th>Teacher</th>${active.map(c => `<th title="${esc(c.name)}">${esc(compShort(c))}</th>`).join('')}<th>Total</th></tr></thead><tbody>
+    ${T.map(t => { const ps = t.participants || []; return `<tr><td style="font-weight:500;white-space:nowrap">${esc(teacherLabel(t))}</td>${active.map(c => { const k = n(ps, p => p.compId === c.id); return `<td style="text-align:center">${k ? `<b>${k}</b>` : '<span class="hint">·</span>'}</td>`; }).join('')}<td style="text-align:center"><b>${ps.length}</b></td></tr>`; }).join('')}
+    <tr><td style="font-weight:500">All teachers</td>${active.map(c => `<td style="text-align:center"><b>${n(all, p => p.compId === c.id)}</b></td>`).join('')}<td style="text-align:center"><b>${all.length}</b></td></tr></tbody></table></div>` : '<p class="empty">No students entered yet. Numbers appear here as teachers add students to competitions.</p>';
+  // Status breakdown bars
+  const bar = ps => { const tot = ps.length || 1; const cols = { Nominated: 'var(--grey)', Registered: 'var(--blue)', Training: 'var(--accent)', Submitted: 'var(--amber)', Qualified: 'var(--green)', Awarded: 'var(--green)', Withdrawn: 'var(--red)' };
+    const parts = PSTAT.map(st => [st, n(ps, p => p.status === st)]).filter(x => x[1]);
+    return `<div style="display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line)">${parts.map(([st, k]) => `<i title="${st}: ${k}" style="width:${k / tot * 100}%;background:${cols[st]}"></i>`).join('')}</div><div class="legend" style="margin-top:6px">${parts.map(([st, k]) => `<span><i class="dot" style="background:${cols[st]}"></i>${st} ${k}</span>`).join('')}</div>`; };
+  const statusPanel = sel.length ? `<section class="panel"><div class="panel-head"><h2>Status of entries</h2><span class="hint">${sel.length} entr${sel.length === 1 ? 'y' : 'ies'}</span></div>${bar(sel)}
+    ${S.ovComp === 'all' ? `<div class="stack" style="gap:10px">${active.map(c => { const ps = all.filter(p => p.compId === c.id); return `<div><div style="display:flex;justify-content:space-between;font-size:13.5px;margin-bottom:4px"><span>${esc(compShort(c))}</span><span class="hint">${ps.length}</span></div>${bar(ps)}</div>`; }).join('')}</div>` : ''}</section>` : '';
+  // Classes represented
+  const classes = {}; sel.forEach(p => { classes[p.cls] = (classes[p.cls] || 0) + 1; });
+  const classPanel = sel.length ? `<section class="panel"><div class="panel-head"><h2>Entries by class</h2></div><div class="tbl"><table><tbody>${Object.entries(classes).sort((x, y) => y[1] - x[1]).map(([c, k]) => `<tr><td>${esc(c || '—')}</td><td style="text-align:right"><b>${k}</b></td></tr>`).join('')}</tbody></table></div></section>` : '';
   const byComp = (S.ovComp === 'all' ? active : active.filter(c => c.id === S.ovComp)).map(c => {
     const ps = all.filter(p => p.compId === c.id); const byT = {}; ps.forEach(p => (byT[p.teacher.uid] = byT[p.teacher.uid] || { t: p.teacher, ps: [] }).ps.push(p));
     const open = S.ovOpen.has('c' + c.id);
@@ -517,20 +532,19 @@ function viewOverview() {
   }).join('') || '<p class="empty">No students entered yet.</p>';
   const byTeacher = T.map(t => {
     const ps = (t.participants || []).filter(p => S.ovComp === 'all' || p.compId === S.ovComp); const open = S.ovOpen.has('t' + t.uid);
-    const missing = KEY_COMPS.filter(id => comp(id) && !(t.participants || []).some(p => p.compId === id));
-    const lateN = t.actions?.late || 0;
-    return `<article class="card ${lateN ? 's-action' : 's-done'}"><button class="head" type="button" data-ovtoggle="t${t.uid}" aria-expanded="${open}"><span class="mark"></span><div style="min-width:0"><h3>${esc(teacherLabel(t))}</h3><div class="meta"><span>${esc(t.email || '')}</span><span>${ps.length} student${ps.length === 1 ? '' : 's'}</span><span>${(n => n + ' competition' + (n === 1 ? '' : 's'))(new Set((t.participants || []).map(p => p.compId)).size)}</span><span>${t.actions?.open ?? 0} open${lateN ? `, <b style="color:var(--red)">${lateN} late</b>` : ''}</span><span>updated ${t.updatedAt ? fmt(t.updatedAt.slice(0, 10)) : '—'}</span></div></div><span class="hint">${open ? 'Hide' : 'Open'}</span></button>
-      ${open ? `<div class="body"><div class="sec">${ps.length ? `<h4>Students</h4><ul class="sel">${ps.map(p => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(p.student)}<small>${esc(p.cls)} · ${esc(compShort(comp(p.compId) || { name: p.compId }))}</small></span><span class="pill p-progress">${esc(p.status)}</span></li>`).join('')}</ul>` : '<p class="hint">No students entered yet.</p>'}</div>
-        <div class="sec">${(t.actions?.lateTitles || []).length ? `<div><h4>Overdue</h4><ul class="src" style="color:var(--red)">${t.actions.lateTitles.map(a => `<li>${esc(a.title)} · ${esc(fmt(a.due))}</li>`).join('')}</ul></div>` : ''}
-        ${missing.length ? `<div><h4>Still needed</h4><ul class="src">${missing.map(id => `<li>${esc(compShort(comp(id)))}: no students yet</li>`).join('')}</ul></div>` : ''}
-        <div class="btn-row n1"><button class="btn primary" type="button" data-remind="${t.uid}">Write reminder email</button></div></div></div>` : ''}</article>`;
+    const compsN = new Set((t.participants || []).map(p => p.compId)).size;
+    return `<article class="card"><button class="head" type="button" data-ovtoggle="t${t.uid}" aria-expanded="${open}"><span class="mark"></span><div style="min-width:0"><h3>${esc(teacherLabel(t))}</h3><div class="meta"><span>${esc(t.email || '')}</span><span>${ps.length} student${ps.length === 1 ? '' : 's'}</span><span>${compsN} competition${compsN === 1 ? '' : 's'}</span><span>updated ${t.updatedAt ? fmt(t.updatedAt.slice(0, 10)) : '—'}</span></div></div><span class="hint">${open ? 'Hide' : 'Open'}</span></button>
+      ${open ? `<div class="body" style="grid-template-columns:1fr">${ps.length ? `<ul class="sel">${ps.map(p => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(p.student)}<small>${esc(p.cls)} · ${esc(compShort(comp(p.compId) || { name: p.compId }))}</small></span><span class="pill p-progress">${esc(p.status)}</span></li>`).join('')}</ul>` : '<p class="hint">No students entered yet.</p>'}
+        <div class="btn-row n1"><button class="btn" type="button" data-remind="${t.uid}">Write next-steps email</button></div></div>` : ''}</article>`;
   }).join('') || '<p class="empty">No teachers have signed up yet.</p>';
   const roles = S.role === 'owner' ? `<section class="panel"><h2>Who can see this overview</h2><p class="hint">You, as owner, plus the coordinators below. They see students' names, classes and competition status for every teacher, but never class lists, scores or private notes.</p>
     <ul class="sel">${(S.roles.coordinators || []).map(e => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(e)}</span><button class="btn small ghost" type="button" data-delcoord="${esc(e)}">Remove</button></li>`).join('') || '<li class="hint">No coordinators yet.</li>'}</ul>
     <form id="addCoord" class="addact" style="border:0;padding:0;grid-template-columns:minmax(0,1fr) auto"><div class="field"><label for="coordEmail">Add a coordinator by school email</label><input id="coordEmail" type="email" placeholder="name@actvet.gov.ae" required></div><button class="btn" type="submit">Add</button></form></section>` : '';
-  return `<div class="panel-head"><h2>Department overview</h2><span class="hint">Updates live as teachers save</span></div>${stats}${chips}
+  return `<div class="panel-head"><h2>Department overview</h2><button class="btn small" type="button" id="ovCsv">Download CSV</button></div>${stats}${chips}
+    <section class="panel"><div class="panel-head"><h2>Students entered, by teacher and competition</h2><span class="hint">Teachers choose which competitions to join</span></div>${matrix}</section>
+    <div class="cols">${statusPanel}${classPanel}</div>
     <div class="cols"><section class="panel"><div class="panel-head"><h2>By competition</h2></div><div class="list">${byComp}</div></section>
-    <section class="panel"><div class="panel-head"><h2>By teacher</h2><button class="btn small" type="button" id="ovCsv">Download CSV</button></div><div class="list">${byTeacher}</div></section></div>${roles}`;
+    <section class="panel"><div class="panel-head"><h2>By teacher</h2></div><div class="list">${byTeacher}</div></section></div>${roles}`;
 }
 
 /* ---------- render & events ---------- */
