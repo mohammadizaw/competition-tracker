@@ -1,0 +1,925 @@
+[
+  {
+    "action": "Confirm with Mr. Abdullah / Mr. Habib whether the school registered. If not, this year's AMC is missed.",
+    "dates": [
+      {
+        "date": "2026-10-15",
+        "label": "Regular registration deadline"
+      },
+      {
+        "date": "2026-11-05",
+        "label": "AMC 10/12 A"
+      },
+      {
+        "date": "2026-11-13",
+        "label": "AMC 10/12 B"
+      }
+    ],
+    "emails": [
+      {
+        "date": "2 Sep",
+        "from": "Mohamed Habib",
+        "subject": "2026–27 MAA American Mathematics Competitions (AMC)"
+      }
+    ],
+    "fee": "US$55 early bird (to 30 Sep), US$75 regular (to 15 Oct)",
+    "grades": "AMC 10: Grade 10 and below · AMC 12: Grade 12 and below",
+    "links": [
+      {
+        "label": "Register as competition manager",
+        "url": "https://maa.org/getting-started-as-a-new-maa-amc-competition-manager/"
+      }
+    ],
+    "name": "MAA American Mathematics Competitions (AMC 10/12)",
+    "organizer": "Mathematical Association of America",
+    "sentBy": [
+      "Mohamed Habib"
+    ],
+    "status": "Closed",
+    "steps": [
+      "Ask Mr. Abdullah whether the school registered (regular deadline was 15 Oct).",
+      "If registered: confirm which students sit AMC 10 (Grade 9 is eligible).",
+      "Practise with past AMC 10 papers.",
+      "Contest days: 5 Nov (A) and 13 Nov (B)."
+    ],
+    "summary": "Mr. Habib asked Mr. Abdullah to request management payment at early-bird price. No confirmation of registration found in the email.",
+    "team": "Individual",
+    "id": "amc"
+  },
+  {
+    "action": "Check each Teams channel for registration status before the October – November window closes.",
+    "dates": [
+      {
+        "date": null,
+        "label": "AMO and iMMO qualifiers – Oct/Nov, dates TBC"
+      },
+      {
+        "date": null,
+        "label": "SASMO and Purple Comet – Mar/Apr, dates TBC"
+      }
+    ],
+    "emails": [
+      {
+        "date": "1 Sep",
+        "from": "Mohamed Habib",
+        "subject": "New Teams channels for math competitions"
+      }
+    ],
+    "grades": "AMO Gr 2–12 · SASMO Gr 1–11 · iMMO K–12 · Purple Comet Gr 6–12",
+    "links": [
+      {
+        "label": "AMO",
+        "url": "https://amo.sg/"
+      },
+      {
+        "label": "SASMO",
+        "url": "https://sasmo.sg/"
+      },
+      {
+        "label": "Purple Comet",
+        "url": "https://purplecomet.org/"
+      }
+    ],
+    "name": "AMO, SASMO, iMMO and Purple Comet",
+    "organizer": "SIMCC / SASMO / Merryland / Purple Comet",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "Planned",
+    "steps": [
+      "Send the competition and student details to Mr. Mahmoud Yousef for management approval (required for competitions not on the required list).",
+      "Register the students on the competition website once approved.",
+      "Ask Mr. Mahmoud to add the participants to the ATS competition platform (EduSIS).",
+      "Run short weekly practice with past papers and keep a training record.",
+      "Confirm the contest date, time and room/computers with Mr. Abdullah.",
+      "Report the results to Mr. Abdullah and Mr. Habib and post them in the Teams channel."
+    ],
+    "summary": "Online olympiads listed in the department plan, each with its own Teams channel. AMO Oct/Nov; iMMO qualifiers Oct/Nov, semi-finals Dec/Jan, finals Feb; SASMO Mar–Apr; Purple Comet April (free).",
+    "team": "Individual (Purple Comet: teams of 1–6)",
+    "id": "amo-sasmo-immo"
+  },
+  {
+    "action": "Decide whether to enter students; check the Caribou Teams channel.",
+    "dates": [
+      {
+        "date": null,
+        "label": "Rounds in Oct, Nov, Jan, Feb, Apr, May – dates TBC"
+      }
+    ],
+    "emails": [
+      {
+        "date": "1 Sep",
+        "from": "Mohamed Habib",
+        "subject": "New Teams channels for math competitions"
+      }
+    ],
+    "fee": "Round 1 free; full pass about US$9–15",
+    "grades": "Grades 3–12",
+    "links": [
+      {
+        "label": "cariboucontests.com",
+        "url": "https://cariboucontests.com/"
+      }
+    ],
+    "name": "Caribou Mathematics Competition",
+    "organizer": "Caribou Contests",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "Planned",
+    "steps": [
+      "Send the competition and student details to Mr. Mahmoud Yousef for management approval (required for competitions not on the required list).",
+      "Register the students on the competition website once approved.",
+      "Ask Mr. Mahmoud to add the participants to the ATS competition platform (EduSIS).",
+      "Run short weekly practice with past papers and keep a training record.",
+      "Confirm the contest date, time and room/computers with Mr. Abdullah.",
+      "Report the results to Mr. Abdullah and Mr. Habib and post them in the Teams channel."
+    ],
+    "summary": "Six online rounds across the year.",
+    "team": "Individual (online)",
+    "id": "caribou"
+  },
+  {
+    "action": "Mr. Abdullah to complete new-school registration.",
+    "dates": [
+      {
+        "date": null,
+        "label": "Pascal / Cayley / Fermat (Grades 9–11) – February, date TBC"
+      },
+      {
+        "date": null,
+        "label": "Euclid (Grade 12) – April, date TBC"
+      }
+    ],
+    "emails": [
+      {
+        "date": "2 Sep",
+        "from": "Abdullah Abbas",
+        "subject": "Mathematics Competitions – Participation and Training Plan (CEMC update)"
+      }
+    ],
+    "fee": "About CAD 10–16",
+    "grades": "Grades 9–12",
+    "links": [
+      {
+        "label": "New-school registration",
+        "url": "https://cemc2.math.uwaterloo.ca/contest/Sigma/school/newSchool.php?pageLang=E"
+      }
+    ],
+    "name": "CEMC Waterloo Contests (Pascal, Cayley, Fermat, Euclid)",
+    "organizer": "University of Waterloo",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "Planned",
+    "steps": [
+      "Send the competition and student details to Mr. Mahmoud Yousef for management approval (required for competitions not on the required list).",
+      "Register the students on the competition website once approved.",
+      "Ask Mr. Mahmoud to add the participants to the ATS competition platform (EduSIS).",
+      "Run short weekly practice with past papers and keep a training record.",
+      "Confirm the contest date, time and room/computers with Mr. Abdullah.",
+      "Report the results to Mr. Abdullah and Mr. Habib and post them in the Teams channel."
+    ],
+    "summary": "New-school registration must be done by the Head of Math or Principal (CEMC contact: cemc@uwaterloo.ca).",
+    "team": "Individual",
+    "id": "cemc"
+  },
+  {
+    "action": "Log in to your teacher account, add your nominated students (names and IDs from 9 Oct) or set up a Maths Squad, tell Mr. Habib what you see, and have students practise on the Grade 9–12 quests.",
+    "dates": [
+      {
+        "date": "2026-09-14",
+        "end": "2026-10-22",
+        "label": "Stage 1 School Leagues (closed)"
+      },
+      {
+        "date": "2026-11-23",
+        "label": "Stage 2 Invitationals (top 5 per grade per school)"
+      },
+      {
+        "date": null,
+        "label": "Stage 3 Semi-finals, SISD Dubai (top 2 per grade) – Term 2, date TBC"
+      },
+      {
+        "date": null,
+        "label": "Stage 4 Finals, Dubai – Term 3, date TBC"
+      }
+    ],
+    "emails": [
+      {
+        "date": "6 Oct",
+        "from": "Mohamed Habib",
+        "subject": "Challenge ME Maths Championship: Form Your Student Groups Now"
+      },
+      {
+        "date": "8 Oct",
+        "from": "Abdullah Abbas",
+        "subject": "Each teacher registers at least one group (same thread)"
+      },
+      {
+        "date": "10 Oct",
+        "from": "Abdullah Abbas",
+        "subject": "Challenge ME Math competition – teacher registration"
+      },
+      {
+        "date": "10 Oct",
+        "from": "Mohamed Habib",
+        "subject": "Challenge ME Competition Registration Completed"
+      },
+      {
+        "date": "22 Oct",
+        "from": "Mohamed Habib",
+        "subject": "Challenge ME Maths Championship – Next Steps"
+      }
+    ],
+    "fee": "Stage 1 free",
+    "grades": "Band 1: Grades 11–12 · Band 2: Grades 9–10",
+    "links": [
+      {
+        "label": "challengememaths.com",
+        "url": "https://www.challengememaths.com/"
+      },
+      {
+        "label": "Teacher login",
+        "url": "https://challengememaths.com/login"
+      }
+    ],
+    "name": "Challenge ME Maths Championship",
+    "organizer": "Challenge ME (MENA)",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "In progress",
+    "steps": [
+      "Log in at challengememaths.com/login and add your students (or create a Maths Squad) in Band 2.",
+      "Email Mr. Habib what you see on the platform and your student list.",
+      "Send the names to Mr. Mahmoud for the ATS competition platform.",
+      "Students practise the Grade 9–10 quests every week (30 min, exam conditions).",
+      "Book a computer room for Stage 2 Invitationals on 23 November.",
+      "If a student is in the top 2 per grade: prepare for the Term 2 semi-final at SISD Dubai (permission slip, transport).",
+      "Report results to Mr. Abdullah and Mr. Habib."
+    ],
+    "summary": "Online quests taken individually in school under exam conditions (30 min). Teacher registration done 10 Oct; school registration completed by Mr. Mahmoud Yousef. Stage 1 (14 Sep – 22 Oct) closed before students were added.",
+    "team": "Groups of any size; every math teacher registers at least one group",
+    "id": "challenge-me"
+  },
+  {
+    "action": "Identify suitable students early and watch for announcements.",
+    "dates": [],
+    "emails": [
+      {
+        "date": "31 Aug",
+        "from": "Abdullah Abbas",
+        "subject": "Mathematics Competitions – Participation and Training Plan"
+      },
+      {
+        "date": "14 Sep",
+        "from": "Abdullah Abbas",
+        "subject": "Future X Hackathon – NSTI participation"
+      }
+    ],
+    "grades": "Students",
+    "links": [],
+    "name": "Emirates Skills, Skills Challenge and NSTI Festival",
+    "organizer": "ACTVET / NSTI",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "Planned",
+    "summary": "Named by Mr. Abdullah as priorities, along with Latifa Award, Sharjah Award, university math/STEM competitions (e.g. NYU), the Math STEM Olympiad and the International Mathematics Olympiad. Mr. Abdullah asked Mr. Mahmoud for guidance on NSTI participation.",
+    "team": "—",
+    "id": "emirates-skills"
+  },
+  {
+    "action": "Check Phase 2 results (due by 23 Oct). Finalists: support and train students, keep a record of training sessions and update Mr. Abdullah.",
+    "dates": [
+      {
+        "date": "2026-09-20",
+        "label": "Registration (closed)"
+      },
+      {
+        "date": "2026-10-20",
+        "label": "Phase 2 progress submission"
+      },
+      {
+        "date": "2026-10-23",
+        "label": "Phase 2 results"
+      },
+      {
+        "date": null,
+        "label": "Finalist judging at NSTI Festival, Al Ain – November, date TBC"
+      }
+    ],
+    "emails": [
+      {
+        "date": "11 Sep",
+        "from": "Mohamed Habib",
+        "subject": "Required competitions"
+      },
+      {
+        "date": "29 Sep",
+        "from": "Abdullah Abbas",
+        "subject": "[EYSC 2026] Congratulations! Your Project Is Proceeding to Phase 2"
+      },
+      {
+        "date": "6 Oct",
+        "from": "Mohamed Habib",
+        "subject": "Follow-up: Maths-related competitions and awards still open"
+      }
+    ],
+    "grades": "Grades 9–12",
+    "links": [
+      {
+        "label": "EYSC 2026",
+        "url": "https://challengeon.atrc.ae/en/challenges/eysc2026"
+      }
+    ],
+    "name": "Emirates Young Scientist Competition (EYSC) 2026 · NSTI",
+    "organizer": "ATRC / ChallengeON",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "In progress",
+    "steps": [
+      "Check Phase 2 results.",
+      "If finalist: train students for on-site judging and keep a training record.",
+      "Attend the NSTI Festival in Al Ain (November)."
+    ],
+    "summary": "Ms. Hayat's team (and Ms. Feda's students) advanced to Phase 2. Top 100 projects go to on-site judging at the NSTI Festival in Al Ain.",
+    "team": "Registered teams only",
+    "id": "eysc"
+  },
+  {
+    "action": "Registration closed 24 Oct. Each teacher who registered a team sends confirmation to Mr. Abdullah, cc Mr. Habib, and records it on the ATS competition platform. Attend the training webinars.",
+    "dates": [
+      {
+        "date": "2026-10-01",
+        "end": "2026-10-24",
+        "label": "Team registration"
+      },
+      {
+        "date": "2026-11-07",
+        "label": "Training webinar 1"
+      },
+      {
+        "date": "2026-11-21",
+        "label": "Training webinar 2"
+      },
+      {
+        "date": "2026-12-19",
+        "label": "Training webinar 3"
+      },
+      {
+        "date": "2027-02-18",
+        "end": "2027-03-17",
+        "label": "Final project submission"
+      },
+      {
+        "date": "2027-03-18",
+        "end": "2027-04-21",
+        "label": "Judging (top 30 per category interviewed)"
+      },
+      {
+        "date": "2027-04-29",
+        "label": "Results and closing ceremony"
+      }
+    ],
+    "emails": [
+      {
+        "date": "24–25 Sep",
+        "from": "Abdullah Abbas",
+        "subject": "تعميم: مسابقة تحدي علوم المستقبل"
+      },
+      {
+        "date": "25 Sep",
+        "from": "Mohamed Habib",
+        "subject": "Summary of guidelines (same thread)"
+      },
+      {
+        "date": "19 Oct",
+        "from": "Mohamed Habib",
+        "subject": "Invitation: Register Your Students in the Future Science Challenge – Season 6"
+      },
+      {
+        "date": "21 Oct",
+        "from": "Abdullah Abbas",
+        "subject": "Reminder: register before 24 Oct"
+      },
+      {
+        "date": "23 Oct",
+        "from": "Mohamed Habib",
+        "subject": "Reminder: deadline tomorrow"
+      }
+    ],
+    "fee": "Free",
+    "grades": "Ages 10–18, same age category per team",
+    "links": [
+      {
+        "label": "Register",
+        "url": "https://hamdanfsc.com/register"
+      },
+      {
+        "label": "Rules and details",
+        "url": "https://hamdanfsc.com/resources"
+      },
+      {
+        "label": "Training resources",
+        "url": "https://hamdanfsc.com/courses"
+      }
+    ],
+    "name": "Future Science Challenge – Season 6",
+    "organizer": "Hamdan Bin Rashid Centre for Giftedness and Innovation",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "In progress",
+    "steps": [
+      "Send registration confirmation to Mr. Abdullah, cc Mr. Habib.",
+      "Attend training webinars on 7 Nov, 21 Nov and 19 Dec with the team.",
+      "Build the AI/IoT prototype (hardware + software) on the roads and mobility theme.",
+      "Submit the final project between 18 Feb and 17 Mar 2027.",
+      "Prepare the team for the online interview if in the top 30.",
+      "Results on 29 Apr 2027."
+    ],
+    "summary": "Arab-world AI/IoT challenge, theme 'The Future of Roads and Mobility' (traffic, accidents, parking, emergency response). Projects need hardware and software. Prizes up to AED 10,000 per student. The math department has registered at least one team.",
+    "team": "2–3 students + 1 supervising teacher",
+    "id": "future-science-challenge"
+  },
+  {
+    "action": "",
+    "dates": [
+      {
+        "date": "2026-09-14",
+        "label": "Registration deadline"
+      }
+    ],
+    "emails": [
+      {
+        "date": "13 Sep",
+        "from": "Abdullah Abbas",
+        "subject": "Future X Hackathon – approval process"
+      },
+      {
+        "date": "29 Sep",
+        "from": "Mohamed Habib",
+        "subject": "Future X Hackathon – registration closed"
+      }
+    ],
+    "grades": "Students",
+    "links": [
+      {
+        "label": "Future X Hackathon",
+        "url": "https://www.ruyacareers.ae/ar/future-x-hackathon"
+      }
+    ],
+    "name": "Future X Hackathon 2026 (Ru'ya)",
+    "organizer": "Ru'ya Careers UAE",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "Closed",
+    "summary": "Some students registered themselves on 11 Sep (followed by Mr. Huthaifa). Management approval came on 29 Sep, after registration had closed.",
+    "team": "—",
+    "id": "future-x"
+  },
+  {
+    "action": "Nominate the one strongest student across all your classes: send full name and class section to Mr. Abdullah, tell the student, and start preparation with past Kangaroo papers.",
+    "dates": [
+      {
+        "date": "2026-10-26",
+        "label": "Send your nominee to Mr. Abdullah (as soon as possible)"
+      },
+      {
+        "date": null,
+        "label": "Competition window (usually March – April), date TBC"
+      }
+    ],
+    "emails": [
+      {
+        "date": "21 Oct",
+        "from": "Abdullah Abbas",
+        "subject": "Kangaroo Math Competition Certificates, Distribution during morning assembly"
+      },
+      {
+        "date": "26 Oct",
+        "from": "Abdullah Abbas",
+        "subject": "IKMC 2026–2027 – Student Nomination and Preparation"
+      }
+    ],
+    "fee": "About AED 150",
+    "grades": "Grades 1–12",
+    "links": [
+      {
+        "label": "Kangaroo UAE + past papers",
+        "url": "https://www.kangaroouae.org/"
+      }
+    ],
+    "name": "International Kangaroo Mathematics Competition (IKMC) 2026–27",
+    "organizer": "Kangaroo UAE",
+    "sentBy": [
+      "Abdullah Abbas"
+    ],
+    "status": "Action needed",
+    "steps": [
+      "Email Mr. Abdullah your one nominee (full name + class).",
+      "Tell the student he is nominated and encourage him.",
+      "Ask Mr. Mahmoud to add him to the ATS competition platform.",
+      "Weekly 30-minute timed practice with past Kangaroo papers (Student/Junior level).",
+      "Checkpoint every 2 weeks: score a full past paper and record it.",
+      "Confirm the March–April exam date and venue with Mr. Abdullah.",
+      "Report the result; collect the certificate."
+    ],
+    "summary": "Multiple-choice creative logic and reasoning contest. Last year's IKMC 2026 certificates (three 1-Star Badges, four Participation) were handed out at the 23 Oct assembly.",
+    "team": "Individual",
+    "id": "ikmc"
+  },
+  {
+    "action": "Check status in the KenKen Teams channel.",
+    "dates": [
+      {
+        "date": null,
+        "label": "National finals – Oct to Nov, date TBC"
+      }
+    ],
+    "emails": [
+      {
+        "date": "1 Sep",
+        "from": "Mohamed Habib",
+        "subject": "New Teams channels for math competitions"
+      }
+    ],
+    "fee": "About AED 150 + VAT",
+    "grades": "Grades 3–12",
+    "links": [
+      {
+        "label": "kenkenuae.com",
+        "url": "https://kenkenuae.com/"
+      }
+    ],
+    "name": "KenKen International Championship (KIC UAE)",
+    "organizer": "KenKen UAE",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "Planned",
+    "steps": [
+      "Send the competition and student details to Mr. Mahmoud Yousef for management approval (required for competitions not on the required list).",
+      "Register the students on the competition website once approved.",
+      "Ask Mr. Mahmoud to add the participants to the ATS competition platform (EduSIS).",
+      "Run short weekly practice with past papers and keep a training record.",
+      "Confirm the contest date, time and room/computers with Mr. Abdullah.",
+      "Report the results to Mr. Abdullah and Mr. Habib and post them in the Teams channel."
+    ],
+    "summary": "Logic grid arithmetic puzzles. School round on demand, national finals October – November.",
+    "team": "Individual",
+    "id": "kenken"
+  },
+  {
+    "action": "Teachers who want to apply prepare evidence as PDFs against the award criteria and apply online before 31 Dec.",
+    "dates": [
+      {
+        "date": "2026-12-31",
+        "label": "Application deadline"
+      },
+      {
+        "date": "2027-04-01",
+        "label": "Winners announced"
+      },
+      {
+        "date": "2027-05-01",
+        "label": "Awards ceremony"
+      }
+    ],
+    "emails": [
+      {
+        "date": "11 Sep",
+        "from": "Mohamed Habib",
+        "subject": "Required competitions"
+      },
+      {
+        "date": "29 Sep",
+        "from": "Mohamed Habib",
+        "subject": "Math Department – Khalifa Award for Education (AI in Education)"
+      },
+      {
+        "date": "6 Oct",
+        "from": "Mohamed Habib",
+        "subject": "Follow-up: Maths-related competitions and awards still open"
+      }
+    ],
+    "grades": "Teachers (not students)",
+    "links": [
+      {
+        "label": "Award fields",
+        "url": "https://khaward.ae/en/all-fields/"
+      },
+      {
+        "label": "Apply online",
+        "url": "https://kaes.khaward.ae/en-US"
+      }
+    ],
+    "name": "Khalifa Award for Education – 20th Cycle",
+    "organizer": "Khalifa Award for Education",
+    "sentBy": [
+      "Mohamed Habib"
+    ],
+    "status": "Planned",
+    "steps": [
+      "Choose the field (Innovation and AI in Education fits best).",
+      "Collect evidence of your AI-supported teaching as PDFs.",
+      "Apply online before 31 Dec 2026."
+    ],
+    "summary": "Best-fit field for math teachers: Innovation and Artificial Intelligence in Education (also General Education, Educational Research, Innovative Educational Projects).",
+    "team": "Individual, or teams of up to 8; one field per applicant",
+    "id": "khalifa-award"
+  },
+  {
+    "action": "Announce each activity in the Math Club Teams channel and forward to students.",
+    "dates": [],
+    "emails": [
+      {
+        "date": "30 Sep",
+        "from": "Abdullah Abbas",
+        "subject": "Sudoku Challenge"
+      },
+      {
+        "date": "19 Oct",
+        "from": "Abdullah Abbas",
+        "subject": "Daily Math Challenge – QR code"
+      }
+    ],
+    "grades": "Grades 9–12",
+    "links": [],
+    "name": "Math Club challenges (in school)",
+    "organizer": "ATS Math Club",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "In progress",
+    "summary": "Internal activities: Blokus Challenge (Sep), Sudoku Challenge in the library (1 Oct), Daily Math Challenge QR posters, Chess Club 2026–27.",
+    "team": "Individual",
+    "id": "math-club"
+  },
+  {
+    "action": "",
+    "dates": [
+      {
+        "date": "2026-10-08",
+        "label": "Last of these deadlines"
+      }
+    ],
+    "emails": [
+      {
+        "date": "11 Sep",
+        "from": "Mohamed Habib",
+        "subject": "Required competitions"
+      },
+      {
+        "date": "22 Sep",
+        "from": "Mohamed Habib",
+        "subject": "Math Department – Competition Opportunities"
+      }
+    ],
+    "grades": "Various",
+    "links": [
+      {
+        "label": "Mubarmij Al Emarat",
+        "url": "https://www.mubarmijalemarat.com/"
+      },
+      {
+        "label": "Business Cup Challenge",
+        "url": "https://site.curtindubai.ac.ae/bcc/"
+      },
+      {
+        "label": "Sharjah Award",
+        "url": "https://award-shj.ae"
+      }
+    ],
+    "name": "September – October opportunities (deadlines passed)",
+    "organizer": "Various",
+    "sentBy": [
+      "Mohamed Habib"
+    ],
+    "status": "Closed",
+    "summary": "Cyber Security Adventures (8 Sep), Sheikha Hind Quran Competition (13 Sep), MENA School Excellence Awards (14 Sep), The Next Presenter and Green Innovation Challenge by Ru'ya (14 Sep), Mubarmij Al Emarat (21 Sep), Business Cup Challenge (24 Sep), Sharjah Sustainability Award (24 Sep), Sharjah Award for Educational Excellence (4 Oct), Future Pioneers Award (8 Oct).",
+    "team": "Various",
+    "id": "past-deadlines"
+  },
+  {
+    "action": "Form teams of three in the RIT Dubai Teams channel and check this year's registration dates.",
+    "dates": [
+      {
+        "date": null,
+        "label": "Registration and paper submission – October, date TBC"
+      },
+      {
+        "date": null,
+        "label": "Presentation – November, date TBC"
+      }
+    ],
+    "emails": [
+      {
+        "date": "31 Aug",
+        "from": "Abdullah Abbas",
+        "subject": "Mathematics Competitions – Participation and Training Plan"
+      },
+      {
+        "date": "1 Sep",
+        "from": "Mohamed Habib",
+        "subject": "New Teams channels for math competitions"
+      }
+    ],
+    "fee": "Free",
+    "grades": "Grades 11–12",
+    "links": [
+      {
+        "label": "RIT Dubai math competition",
+        "url": "https://www.rit.edu/dubai/math-competition"
+      }
+    ],
+    "name": "RIT Dubai High School Mathematics Competition",
+    "organizer": "RIT Dubai",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "Planned",
+    "steps": [
+      "Send the competition and student details to Mr. Mahmoud Yousef for management approval (required for competitions not on the required list).",
+      "Register the students on the competition website once approved.",
+      "Ask Mr. Mahmoud to add the participants to the ATS competition platform (EduSIS).",
+      "Run short weekly practice with past papers and keep a training record.",
+      "Confirm the contest date, time and room/computers with Mr. Abdullah.",
+      "Report the results to Mr. Abdullah and Mr. Habib and post them in the Teams channel."
+    ],
+    "summary": "Real-world math paper plus live presentation. Mr. Habib flagged it on 1 Sep: start forming teams early in its Teams channel.",
+    "team": "Teams of 3",
+    "id": "rit-dubai"
+  },
+  {
+    "action": "Teachers taking part complete the MOE_Template_STEAM Champions.xlsx (team name, students, coaches, category) for the school coordinator; one school-level submission. Supervising teacher completes the free Level 1 Coach Certification. Mr. Habib's reminder on 23 Oct: deadline approaching.",
+    "dates": [
+      {
+        "date": "2026-11-15",
+        "label": "Team registration closes (school template)"
+      },
+      {
+        "date": "2027-02-20",
+        "label": "Online qualification: 10 modules + Engineering Notebook"
+      },
+      {
+        "date": "2027-03-13",
+        "label": "International online judging"
+      },
+      {
+        "date": "2027-03-20",
+        "label": "National Championship & Expo, Dubai"
+      }
+    ],
+    "emails": [
+      {
+        "date": "22 Sep",
+        "from": "Abdullah Abbas",
+        "subject": "[EDUSIS – ATS Competition] STEAM Champions approved and published"
+      },
+      {
+        "date": "25 Sep",
+        "from": "Abdullah Abbas",
+        "subject": "STEAM Champions UAE Update & other Competitions"
+      },
+      {
+        "date": "29 Sep",
+        "from": "Mohamed Habib",
+        "subject": "ACTION REQUIRED – STEAM Champions UAE 2026/27"
+      },
+      {
+        "date": "12 Oct",
+        "from": "Abdullah Abbas",
+        "subject": "Action Required: STEAM Champions Registration – Deadline 15 November"
+      },
+      {
+        "date": "23 Oct",
+        "from": "Mohamed Habib",
+        "subject": "Reminder on the same thread"
+      }
+    ],
+    "fee": "Covered by the school (exemption code MOEUAE)",
+    "grades": "Grades 7–12 (ages 8–18)",
+    "links": [
+      {
+        "label": "Competition page",
+        "url": "https://edustream.ae/steam-champions-uae-2026-2027/"
+      },
+      {
+        "label": "EduStream events",
+        "url": "https://edustream.ae/events/"
+      },
+      {
+        "label": "Orientation recordings (YouTube)",
+        "url": "https://www.youtube.com/@edustreamuae/featured"
+      }
+    ],
+    "name": "STEAM Champions UAE 2026–27",
+    "organizer": "UAE Ministry of Education · EduStream",
+    "sentBy": [
+      "Abdullah Abbas",
+      "Mohamed Habib"
+    ],
+    "status": "Action needed",
+    "steps": [
+      "Form a team of 1–3 students and choose a category (Technovation, FIRA Innovation & Business, or FIRA Mission Impossible).",
+      "Email Mr. Habib the team name, students, coach and category for the MOE template (deadline 15 Nov).",
+      "Complete the free Level 1 Coach Certification.",
+      "Students complete the 10 learning modules and keep their Digital Passport.",
+      "Meet weekly; students record research, design and testing in the Engineering Notebook.",
+      "Upload modules and Engineering Notebook by 20 Feb 2027.",
+      "Online judging 13 Mar; National final in Dubai 20 Mar 2027."
+    ],
+    "summary": "National STEAM innovation competition, theme 'Circular Futures' (UN SDG 12). Participation is mandatory for the department. Best-fit categories: Technovation Digital Venture, FIRA Innovation & Business, FIRA Mission Impossible. Track 2 (Circular Stories: short film, 2D/3D art, photography) is also open.",
+    "team": "1–3 per team in the math-fit categories; schools may enter several teams",
+    "id": "steam-champions"
+  },
+  {
+    "action": "For registered projects: make sure the product is ready and matches the registration video before first evaluation. Confirm students can attend the December training camp (winter break).",
+    "dates": [
+      {
+        "date": "2026-10-15",
+        "label": "Registration (closed)"
+      },
+      {
+        "date": "2026-11-02",
+        "end": "2026-11-20",
+        "label": "First evaluation – top 300 selected"
+      },
+      {
+        "date": "2026-11-23",
+        "end": "2026-12-01",
+        "label": "Qualified projects announced"
+      },
+      {
+        "date": "2026-12-14",
+        "end": "2026-12-25",
+        "label": "Training camp"
+      },
+      {
+        "date": "2027-01-05",
+        "end": "2027-01-11",
+        "label": "Top 100 selection"
+      },
+      {
+        "date": "2027-01-16",
+        "end": "2027-01-24",
+        "label": "Weekly preparation sessions"
+      },
+      {
+        "date": "2027-01-29",
+        "end": "2027-01-31",
+        "label": "National exhibition and final judging"
+      },
+      {
+        "date": "2027-06-01",
+        "label": "Investor support for winners"
+      }
+    ],
+    "emails": [
+      {
+        "date": "22 Sep",
+        "from": "Mohamed Habib",
+        "subject": "Math Department – Competition Opportunities (deadlines through 15 Oct)"
+      },
+      {
+        "date": "22 Oct",
+        "from": "Mohamed Habib",
+        "subject": "Young Entrepreneur Competition 2026–2027 – Next Stages for Registered Projects"
+      }
+    ],
+    "grades": "Grades 9–12",
+    "links": [],
+    "name": "Young Entrepreneur 2026–27 (التاجر الصغير)",
+    "organizer": "UAE Ministry of Education",
+    "sentBy": [
+      "Mohamed Habib"
+    ],
+    "status": "In progress",
+    "steps": [
+      "Make sure the product is ready and matches the registration video.",
+      "Check email/portal for first-evaluation results (23 Nov – 1 Dec).",
+      "Confirm students can attend the training camp 14–25 Dec.",
+      "Improve product, pricing and pitch for the top 100 selection (5–11 Jan).",
+      "Prepare stand, stock and sales pitch for the national exhibition 29–31 Jan."
+    ],
+    "summary": "Students build and sell a tangible product. Registration closed 15 Oct. Projects with a commercial licence are not eligible.",
+    "team": "1–3 students + 1 supervisor (max 2 projects per supervisor)",
+    "id": "young-entrepreneur"
+  }
+]

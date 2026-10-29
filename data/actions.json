@@ -1,0 +1,90 @@
+[
+  {
+    "comp": null,
+    "due": "2026-10-28",
+    "email": "followup",
+    "hint": "Mr. Habib sent a reminder on 27 Oct (Microsoft Forms link in his email). Then send him your update.",
+    "id": "a1",
+    "title": "Fill in Mr. Habib's Competitions Follow-up form"
+  },
+  {
+    "comp": "ikmc",
+    "due": "2026-10-28",
+    "email": "nominee",
+    "hint": "One student, the strongest across your classes. Pick him in 'Pick students'.",
+    "id": "a2",
+    "title": "Choose your IKMC nominee and email Mr. Abdullah"
+  },
+  {
+    "comp": "challenge-me",
+    "due": "2026-10-29",
+    "email": "challenge",
+    "hint": "Log in at challengememaths.com/login, add students or a Maths Squad.",
+    "id": "a3",
+    "title": "Add your Band 2 students on Challenge ME and email Mr. Habib"
+  },
+  {
+    "comp": "amc",
+    "due": "2026-10-29",
+    "email": "amc",
+    "hint": "Contests are 5 and 13 Nov.",
+    "id": "a4",
+    "title": "Ask Mr. Abdullah if the school registered for AMC"
+  },
+  {
+    "comp": null,
+    "due": "2026-10-30",
+    "email": "mahmoud",
+    "hint": "Mr. Abdullah's rule: competitions are approved and recorded through Mr. Mahmoud Yousef.",
+    "id": "a5",
+    "title": "Send your participants to Mr. Mahmoud for the ATS competition platform"
+  },
+  {
+    "comp": "ikmc",
+    "due": "2026-11-03",
+    "email": null,
+    "hint": "30 minutes a week, timed. Record each score.",
+    "id": "a6",
+    "title": "IKMC: start weekly practice with past Kangaroo papers"
+  },
+  {
+    "comp": "steam-champions",
+    "due": "2026-11-08",
+    "email": "steam",
+    "hint": "Team name, 1–3 students, category, coach. School deadline 15 Nov.",
+    "id": "a7",
+    "title": "STEAM Champions: form a team and send the details to Mr. Habib"
+  },
+  {
+    "comp": "steam-champions",
+    "due": "2026-11-12",
+    "email": null,
+    "hint": "Free, self-paced, online.",
+    "id": "a8",
+    "title": "STEAM Champions: finish the Level 1 Coach Certification"
+  },
+  {
+    "comp": "challenge-me",
+    "due": "2026-11-16",
+    "email": null,
+    "hint": "Stage 2 Invitationals are on 23 Nov, taken in school.",
+    "id": "a9",
+    "title": "Challenge ME: book a computer room for Stage 2"
+  },
+  {
+    "comp": "challenge-me",
+    "due": "2026-11-23",
+    "email": null,
+    "hint": "Top 5 per grade get guaranteed entry.",
+    "id": "a10",
+    "title": "Challenge ME Stage 2 Invitationals – students sit the quest"
+  },
+  {
+    "comp": "khalifa-award",
+    "due": "2026-12-15",
+    "email": null,
+    "hint": "Deadline 31 Dec. Prepare PDF evidence.",
+    "id": "a11",
+    "title": "Khalifa Award: decide whether to apply (AI in Education)"
+  }
+]

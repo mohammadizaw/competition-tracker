@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1419" media="(prefers-color-scheme: dark)">
+<title>Math Competitions Tracker</title>
+<meta name="description" content="Private workspace for ATS RAK maths teachers: pick students, follow actions and track every competition.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%2314b8a6'/%3E%3Cstop offset='1' stop-color='%236366f1'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='16' fill='url(%23g)'/%3E%3Cpath d='M18 42 L28 22 L36 36 L42 28 L48 42' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Sans+Arabic:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+<script>
+  // Apply the saved theme before first paint to avoid a flash.
+  try{var t=localStorage.getItem('mct-theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t;}catch(e){}
+</script>
+</head>
+<body>
+<div class="bg-art" aria-hidden="true"><i class="orb o1"></i><i class="orb o2"></i><i class="orb o3"></i></div>
+
+<!-- ============ Sign-in screen ============ -->
+<section id="authView" class="auth" hidden>
+  <div class="auth-card">
+    <div class="brand">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M18 42 L28 22 L36 36 L42 28 L48 42"/></svg></span>
+      <div>
+        <p class="eyebrow" id="schoolLine">ATS RAK · Mathematics Department</p>
+        <h1>Math Competitions Tracker</h1>
+      </div>
+    </div>
+    <p class="lede">Your own private space. Add your students, pick them for competitions and follow every step. No other teacher can see your data.</p>
+
+    <div class="seg" role="tablist" aria-label="Sign in or create account">
+      <button type="button" class="seg-btn on" data-auth="in" role="tab" aria-selected="true">Sign in</button>
+      <button type="button" class="seg-btn" data-auth="up" role="tab" aria-selected="false">Create account</button>
+    </div>
+
+    <form id="authForm" class="stack" novalidate>
+      <div class="field" id="nameField" hidden>
+        <label for="auName">Your name <small>(as it should appear in your emails)</small></label>
+        <input id="auName" autocomplete="name" placeholder="e.g. Mohammad Awwad">
+      </div>
+      <div class="field">
+        <label for="auEmail">School email</label>
+        <input id="auEmail" type="email" autocomplete="username" inputmode="email" placeholder="name@actvet.gov.ae" required>
+      </div>
+      <div class="field">
+        <label for="auPass">Password <small id="passHint" hidden>(at least 8 characters)</small></label>
+        <div class="pw"><input id="auPass" type="password" autocomplete="current-password" required minlength="6"><button type="button" class="btn ghost icon" id="pwToggle" aria-label="Show password">👁</button></div>
+      </div>
+      <p id="authMsg" class="msg" role="status" aria-live="polite"></p>
+      <div class="btn-row two">
+        <button type="button" class="btn" id="forgotBtn">Forgot password</button>
+        <button type="submit" class="btn primary" id="authSubmit">Sign in</button>
+      </div>
+    </form>
+    <p class="demo-note" id="demoNote" hidden>Demo mode: Firebase is not configured yet, so your data stays in this browser only.</p>
+  </div>
+</section>
+
+<!-- ============ App shell ============ -->
+<div id="app" class="app" hidden>
+  <header class="topbar">
+    <div class="brand compact">
+      <span class="logo" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M18 42 L28 22 L36 36 L42 28 L48 42"/></svg></span>
+      <div><p class="eyebrow" id="schoolLine2">ATS RAK</p><h1>Competitions</h1></div>
+    </div>
+    <div class="top-actions">
+      <div class="seg small theme" role="group" aria-label="Theme">
+        <button type="button" class="seg-btn" data-theme="light" aria-label="Light theme" title="Light">☀️</button>
+        <button type="button" class="seg-btn" data-theme="auto" aria-label="Match device" title="Auto">◐</button>
+        <button type="button" class="seg-btn" data-theme="dark" aria-label="Dark theme" title="Dark">🌙</button>
+      </div>
+      <button type="button" class="btn avatar" id="userBtn" aria-haspopup="dialog" title="Account"><span id="userInitials">?</span></button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" hidden role="status"></div>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" class="tab" role="tab" data-tab="home" aria-selected="true"><span class="ico">🏠</span><span>Home</span><b class="cnt" id="homeCnt" hidden></b></button>
+    <button type="button" class="tab" role="tab" data-tab="students" aria-selected="false"><span class="ico">🎓</span><span>Students</span></button>
+    <button type="button" class="tab" role="tab" data-tab="competitions" aria-selected="false"><span class="ico">🏆</span><span>Competitions</span></button>
+  </nav>
+
+  <main id="view" class="view" tabindex="-1"></main>
+</div>
+
+<!-- ============ Dialogs ============ -->
+<dialog id="mailDlg" class="dlg">
+  <form method="dialog" class="stack">
+    <h2 id="mTitle">Email draft</h2>
+    <div id="mWarn" class="callout warn" hidden></div>
+    <div class="field"><label for="mTo">To</label><input id="mTo"></div>
+    <div class="field"><label for="mCc">Cc</label><input id="mCc"></div>
+    <div class="field"><label for="mSubj">Subject</label><input id="mSubj"></div>
+    <div class="field"><label for="mBody">Message (you can edit it)</label><textarea id="mBody" rows="10"></textarea></div>
+    <p class="hint">Open it in your mail app, or copy it and paste into a new Outlook message.</p>
+    <div class="btn-row two">
+      <button type="button" class="btn" id="mClose">Close</button>
+      <a class="btn" id="mOpen" href="#" target="_blank" rel="noopener">Open in mail app</a>
+      <button type="button" class="btn" id="mCopy">Copy email</button>
+      <button type="button" class="btn primary" id="mDone">Copy &amp; mark done</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="studentDlg" class="dlg">
+  <form id="studentForm" class="stack" novalidate>
+    <h2 id="sTitle">Add a student</h2>
+    <div class="field"><label for="sName">Full name</label><input id="sName" required autocomplete="off"></div>
+    <div class="grid2">
+      <div class="field"><label for="sClass">Class</label><input id="sClass" list="classList" placeholder="e.g. 9 Advanced-3" required></div>
+      <div class="field"><label for="sScore">SBQ1 score %</label><input id="sScore" type="number" min="0" max="100" inputmode="numeric" placeholder="optional"></div>
+    </div>
+    <datalist id="classList"></datalist>
+    <p id="sMsg" class="msg"></p>
+    <div class="btn-row two">
+      <button type="button" class="btn" id="sCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="sSave">Save student</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="accountDlg" class="dlg">
+  <form id="accountForm" class="stack" novalidate>
+    <h2>Your account</h2>
+    <div class="field"><label for="acName">Your name (signs your emails)</label><input id="acName" placeholder="e.g. Mohammad Awwad"></div>
+    <div class="field"><label>Signed in as</label><p class="mono" id="acEmail"></p></div>
+    <p class="hint">Only you can see your students, actions and notes. Other teachers have their own space.</p>
+    <div class="btn-row two">
+      <button type="button" class="btn danger-ghost" id="signOutBtn">Sign out</button>
+      <button type="submit" class="btn primary">Save</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="confirmDlg" class="dlg small">
+  <form method="dialog" class="stack">
+    <h2 id="cfTitle">Are you sure?</h2>
+    <p id="cfBody" class="hint"></p>
+    <div class="btn-row two">
+      <button type="button" class="btn" id="cfNo">Cancel</button>
+      <button type="button" class="btn danger" id="cfYes">Remove</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toasts" class="toasts" aria-live="polite"></div>
+
+<script src="firebase-config.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
