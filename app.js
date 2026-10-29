@@ -658,7 +658,7 @@ $('authForm').addEventListener('submit', async e => {
 
 /* ---------- boot ---------- */
 async function loadShared() {
-  const [c, t] = await Promise.all([fetch('data/competitions.json').then(r => r.json()), fetch('data/actions.json').then(r => r.json())]);
+  const [c, t] = await Promise.all([fetch('data/competitions.json?v=1793262774').then(r => r.json()), fetch('data/actions.json?v=1793262774').then(r => r.json())]);
   S.comps = c; S.templates = t;
 }
 async function enter(user) {
