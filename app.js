@@ -220,7 +220,7 @@ function actRow(a) {
   if (a.hidden) b.push(`<button class="btn small ghost" type="button" data-unhide="${a.id}">Show again</button>`);
   if (a.custom) b.push(`<button class="btn small ghost" type="button" data-delact="${a.id}">Delete</button>`);
   return `<div class="act ${a.done ? 'done' : ''}"><input type="checkbox" ${a.done ? 'checked' : ''} data-tick="${a.id}" aria-label="Mark ${esc(a.title)} done">
-    <div style="min-width:0"><div class="t">${esc(a.title)}</div><div class="c">${c ? esc(compShort(c)) + ' · ' : ''}${a.due ? esc(fmt(a.due, false)) : ''}</div>${a.hint ? `<div class="c">${esc(a.hint)}</div>` : ''}
+    <div style="min-width:0"><div class="t">${esc(a.title)}</div><div class="c">${c ? `<a href="#competitions" data-gocomp="${c.id}">${esc(compShort(c))}</a> · ` : ''}${a.due ? esc(fmt(a.due, false)) : ''}</div>${a.hint ? `<div class="c">${esc(a.hint)}</div>` : ''}
     ${b.length ? `<div class="btn-row n${Math.min(b.length,4)}">${b.join('')}</div>` : ''}</div>${dueChip(a.due, a.done)}</div>`;
 }
 function viewHome() {
@@ -300,12 +300,12 @@ function viewStudents() {
   const classes = [...new Set(R.map(s => s.cls))].sort();
   let rows = R.filter(s => (S.rclass === 'all' || s.cls === S.rclass) && (!S.rq || s.n.toLowerCase().includes(S.rq)));
   rows.sort(S.rsort === 'name' ? (a, b) => a.n < b.n ? -1 : 1 : (a, b) => (b.s || 0) - (a.s || 0));
-  const tags = n => compsOfStudent(n).map(id => comp(id)).filter(Boolean).map(x => `<span class="tag">${esc(compShort(x))}</span>`).join('');
+  const tags = n => compsOfStudent(n).map(id => comp(id)).filter(Boolean).map(x => `<a class="tag" href="#competitions" data-gocomp="${x.id}">${esc(compShort(x))}</a>`).join('');
   const sc = s => s.s != null ? `<span class="score ${lvl(s.s)}">${s.s}%</span>` : '<span class="score">—</span>';
   return `<div class="chips" role="tablist" aria-label="Competition">${chips}</div>
   <div class="cols">
     <section class="panel">
-      <div><h2>${esc(c.name)}</h2><div class="meta">${esc(c.grades || '')}${c.team ? ' · ' + esc(c.team) : ''}</div></div>
+      <div><h2><a href="#competitions" class="complink" data-gocomp="${c.id}">${esc(c.name)}</a></h2><div class="meta">${esc(c.grades || '')}${c.team ? ' · ' + esc(c.team) : ''}<a href="#competitions" data-gocomp="${c.id}">Full details, dates and links</a></div></div>
       <div class="callout info">${esc(rule.note)}</div>
       <div><h4>Your students for this competition · ${chosen.length}${rule.max ? ' of ' + rule.max : ''}</h4>
         ${chosen.length ? `<ul class="sel">${chosen.map(p => `<li><span class="nm">${esc(p.student)}<small>${esc(p.cls)}${p.score != null ? ' · SBQ1 ' + p.score + '%' : ''}</small></span>
@@ -545,14 +545,14 @@ function viewOverview() {
   const byComp = (S.ovComp === 'all' ? active : active.filter(c => c.id === S.ovComp)).map(c => {
     const ps = all.filter(p => p.compId === c.id); const byT = {}; ps.forEach(p => (byT[p.teacher.uid] = byT[p.teacher.uid] || { t: p.teacher, ps: [] }).ps.push(p));
     const open = S.ovOpen.has('c' + c.id);
-    return `<article class="card s-${scls(c.status)}"><button class="head" type="button" data-ovtoggle="c${c.id}" aria-expanded="${open}"><span class="mark"></span><div style="min-width:0"><h3>${esc(c.name)}</h3><div class="meta"><span>${ps.length} student${ps.length === 1 ? '' : 's'}</span><span>${Object.keys(byT).length} teacher${Object.keys(byT).length === 1 ? '' : 's'}</span></div></div><span class="hint">${open ? 'Hide' : 'Open'}</span></button>
+    return `<article class="card s-${scls(c.status)}"><button class="head" type="button" data-ovtoggle="c${c.id}" aria-expanded="${open}"><span class="mark"></span><div style="min-width:0"><h3>${esc(c.name)} <a href="#competitions" data-gocomp="${c.id}" class="hint" style="font:inherit;font-size:13px">details</a></h3><div class="meta"><span>${ps.length} student${ps.length === 1 ? '' : 's'}</span><span>${Object.keys(byT).length} teacher${Object.keys(byT).length === 1 ? '' : 's'}</span></div></div><span class="hint">${open ? 'Hide' : 'Open'}</span></button>
       ${open ? `<div class="body" style="grid-template-columns:1fr">${Object.values(byT).map(g => `<div><h4>${esc(teacherLabel(g.t))} · ${g.ps.length}</h4><ul class="sel">${g.ps.map(p => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(p.student)}<small>${esc(p.cls)}</small></span><span class="pill p-progress">${esc(p.status)}</span></li>`).join('')}</ul></div>`).join('')}</div>` : ''}</article>`;
   }).join('') || '<p class="empty">No students entered yet.</p>';
   const byTeacher = T.map(t => {
     const ps = (t.participants || []).filter(p => S.ovComp === 'all' || p.compId === S.ovComp); const open = S.ovOpen.has('t' + t.uid);
     const compsN = new Set((t.participants || []).map(p => p.compId)).size;
     return `<article class="card"><button class="head" type="button" data-ovtoggle="t${t.uid}" aria-expanded="${open}"><span class="mark"></span><div style="min-width:0"><h3>${esc(teacherLabel(t))}</h3><div class="meta"><span>${esc(t.email || '')}</span><span>${ps.length} student${ps.length === 1 ? '' : 's'}</span><span>${compsN} competition${compsN === 1 ? '' : 's'}</span><span>updated ${t.updatedAt ? fmt(t.updatedAt.slice(0, 10)) : '—'}</span></div></div><span class="hint">${open ? 'Hide' : 'Open'}</span></button>
-      ${open ? `<div class="body" style="grid-template-columns:1fr">${ps.length ? `<ul class="sel">${ps.map(p => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(p.student)}<small>${esc(p.cls)} · ${esc(compShort(comp(p.compId) || { name: p.compId }))}</small></span><span class="pill p-progress">${esc(p.status)}</span></li>`).join('')}</ul>` : '<p class="hint">No students entered yet.</p>'}
+      ${open ? `<div class="body" style="grid-template-columns:1fr">${ps.length ? `<ul class="sel">${ps.map(p => `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(p.student)}<small>${esc(p.cls)} · <a href="#competitions" data-gocomp="${esc(p.compId)}">${esc(compShort(comp(p.compId) || { name: p.compId }))}</a></small></span><span class="pill p-progress">${esc(p.status)}</span></li>`).join('')}</ul>` : '<p class="hint">No students entered yet.</p>'}
         <div class="btn-row n1"><button class="btn" type="button" data-remind="${t.uid}">Write next-steps email</button></div></div>` : ''}</article>`;
   }).join('') || '<p class="empty">No teachers have signed up yet.</p>';
   const coordUids = S.roles?.coordinatorUids || [];
@@ -580,6 +580,7 @@ function render() {
   const keep = a && a.id === 'rq' ? { pos: a.selectionStart } : null;
   $('view').innerHTML = S.tab === 'home' ? viewHome() : S.tab === 'students' ? viewStudents() : S.tab === 'overview' ? viewOverview() : viewComps();
   if (keep && $('rq')) { $('rq').focus(); $('rq').setSelectionRange(keep.pos, keep.pos); }
+  const onChip = $('view').querySelector('.chip.on'); if (onChip && S.tab === 'students') onChip.scrollIntoView({ block: 'nearest', inline: 'center' });
   $('userInitials').textContent = (teacherName() || S.user.email || '?').trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase();
 }
 $('view').addEventListener('focusout', () => setTimeout(() => { if (pending) render(); }, 0));
@@ -588,16 +589,16 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
 window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['home', 'students', 'competitions', 'overview'].includes(h) && h !== S.tab) { S.tab = h; render(); } });
 
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],[data-delclass],[data-ov],[data-ovtoggle],[data-remind],[data-coord],[data-share],#ovCsv,#delAllStu,#pickClassHint,#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
+  const t = e.target.closest('[data-gocomp],[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],[data-delclass],[data-ov],[data-ovtoggle],[data-remind],[data-coord],[data-share],#ovCsv,#delAllStu,#pickClassHint,#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
   const d = t.dataset;
-  if (d.toggle) { S.open.has(d.toggle) ? S.open.delete(d.toggle) : S.open.add(d.toggle); render(); }
+  if (d.gocomp) { e.preventDefault(); e.stopPropagation(); S.open.add(d.gocomp); go('competitions'); setTimeout(() => $('c-' + d.gocomp)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50); }
+  else if (d.toggle) { S.open.has(d.toggle) ? S.open.delete(d.toggle) : S.open.add(d.toggle); render(); }
   else if (d.pc) { S.pickComp = d.pc; render(); }
   else if (d.add) addStudentTo(d.add);
   else if (d.rmName) { const p = mine(S.pickComp).find(x => x.student === d.rmName); if (p) { S.data.participants = S.data.participants.filter(x => x.id !== p.id); persist(); render(); toast('Removed'); } }
   else if (d.pdel) { S.data.participants = S.data.participants.filter(x => x.id !== d.pdel); persist(); render(); toast('Removed'); }
   else if (d.mail) openMail(d.mail, d.cid || null, d.act || null);
   else if (d.gopick) { S.pickComp = d.gopick; go('students'); }
-  else if (d.gocomp) { S.open.add(d.gocomp); go('competitions'); setTimeout(() => $('c-' + d.gocomp)?.scrollIntoView({ block: 'start', behavior: 'smooth' }), 50); }
   else if (d.cal !== undefined) { if (d.cal === '0') { S.calMonth = null; S.calSel = iso(today); } else { const b = S.calMonth || new Date(today.getFullYear(), today.getMonth(), 1); S.calMonth = new Date(b.getFullYear(), b.getMonth() + Number(d.cal), 1); } render(); }
   else if (d.day) { S.calSel = S.calSel === d.day ? null : d.day; render(); }
   else if (d.hide) hideAct(d.hide, true);
