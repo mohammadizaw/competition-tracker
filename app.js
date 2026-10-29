@@ -299,7 +299,8 @@ function viewStudents() {
       <select id="rsort" aria-label="Sort"><option value="score" ${S.rsort === 'score' ? 'selected' : ''}>Highest score first</option><option value="name" ${S.rsort === 'name' ? 'selected' : ''}>A–Z</option></select></div>
     <div class="tbl"><table><thead><tr><th>Student</th><th>Class</th><th>SBQ1</th><th>Competitions</th><th></th></tr></thead><tbody>
       ${rows.map(s => `<tr><td style="font-weight:600">${esc(s.n)}</td><td style="white-space:nowrap">${esc(s.cls)}</td><td>${sc(s)}</td><td>${tags(s.n)}</td><td><div class="actions">${addBtn(s)}<button class="btn small ghost" type="button" data-edit="${esc(s.n)}" aria-label="Edit">Edit</button><button class="btn small ghost" type="button" data-delstu="${esc(s.n)}" aria-label="Delete">Remove</button></div></td></tr>`).join('') || '<tr><td colspan="5" class="hint">No student matches.</td></tr>'}
-    </tbody></table></div>` : `<p class="empty">No students yet. Add them one by one, or import them from Excel, CSV or by pasting.</p>`}
+    </tbody></table></div>
+    <div class="btn-row two">${S.rclass !== 'all' ? `<button class="btn danger-ghost" type="button" data-delclass="${esc(S.rclass)}">Remove class ${esc(S.rclass)} (${R.filter(s => s.cls === S.rclass).length})</button>` : '<button class="btn" type="button" id="pickClassHint">Choose a class above to remove it</button>'}<button class="btn danger-ghost" type="button" id="delAllStu">Remove all students (${R.length})</button></div>` : `<p class="empty">No students yet. Add them one by one, or import them from Excel, CSV or by pasting.</p>`}
   </section>`;
 }
 function addStudentTo(name) {
@@ -454,7 +455,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
 window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['home', 'students', 'competitions'].includes(h) && h !== S.tab) { S.tab = h; render(); } });
 
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
+  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],[data-delclass],#delAllStu,#pickClassHint,#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
   const d = t.dataset;
   if (d.toggle) { S.open.has(d.toggle) ? S.open.delete(d.toggle) : S.open.add(d.toggle); render(); }
   else if (d.pc) { S.pickComp = d.pc; render(); }
@@ -470,6 +471,9 @@ document.addEventListener('click', async e => {
   else if (d.unhide) hideAct(d.unhide, false);
   else if (d.delact) { if (await confirmDlg('Delete this reminder?', 'It will be removed from your list and calendar.', 'Delete')) { S.data.actions = S.data.actions.filter(x => x.id !== d.delact); persist(); render(); } }
   else if (d.edit) openStudent(d.edit);
+  else if (d.delclass) { const n = S.data.roster.filter(x => x.cls === d.delclass).length; if (await confirmDlg(`Remove all ${n} students in ${d.delclass}?`, 'They are removed from your list and from any competitions you picked them for. You can import them again later.', 'Remove class')) { const names = new Set(S.data.roster.filter(x => x.cls === d.delclass).map(x => x.n)); S.data.roster = S.data.roster.filter(x => x.cls !== d.delclass); S.data.participants = S.data.participants.filter(p => !names.has(p.student)); S.rclass = 'all'; persist(); render(); toast(`${n} removed`); } }
+  else if (t.id === 'delAllStu') { const n = S.data.roster.length; if (await confirmDlg(`Remove all ${n} students?`, 'Your whole list and every competition pick is cleared. Your actions and notes stay. You can import the list again later.', 'Remove all')) { S.data.roster = []; S.data.participants = []; S.rclass = 'all'; S.rq = ''; persist(); render(); toast('List cleared'); } }
+  else if (t.id === 'pickClassHint') { $('rclass')?.focus(); }
   else if (d.delstu) { if (await confirmDlg('Remove ' + shortName(d.delstu) + '?', 'The student is removed from your list and from any competition you picked them for.')) { S.data.roster = S.data.roster.filter(x => x.n !== d.delstu); S.data.participants = S.data.participants.filter(p => p.student !== d.delstu); persist(); render(); toast('Removed'); } }
   else if (t.id === 'togDone') { S.showDone = !S.showDone; render(); }
   else if (t.id === 'icsBtn') downloadIcs();
