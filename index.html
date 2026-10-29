@@ -124,6 +124,41 @@
   </form>
 </dialog>
 
+<dialog id="importDlg" class="dlg">
+  <form id="importForm" class="stack" novalidate>
+    <h2>Import your class list</h2>
+    <div class="seg" role="tablist" aria-label="Source">
+      <button type="button" class="seg-btn on" data-src="file" role="tab">Upload a file</button>
+      <button type="button" class="seg-btn" data-src="paste" role="tab">Paste from Excel</button>
+    </div>
+    <div id="srcFile" class="stack">
+      <p class="hint">Excel (.xlsx, .xls) or CSV. Any layout works: you choose the columns in the next step. Student names in the first column and class in the second is the easiest.</p>
+      <label class="btn" for="impFile">Choose file</label><input id="impFile" type="file" accept=".xlsx,.xls,.csv,.txt,text/csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+      <p class="mono" id="impFileName"></p>
+    </div>
+    <div id="srcPaste" class="stack" hidden>
+      <p class="hint">In Excel, select the cells (including the header row if you have one), copy, and paste here.</p>
+      <textarea id="impPaste" rows="6" placeholder="Name	Class	SBQ1&#10;Ahmed Ali	9 Advanced-3	85"></textarea>
+    </div>
+    <div id="impMap" class="stack" hidden>
+      <div class="field" id="impSheetField" hidden><label for="impSheet">Which sheet (tab)?</label><select id="impSheet"></select></div>
+      <label style="display:flex;gap:10px;align-items:center;font-size:14px"><input type="checkbox" id="impHeader" checked> First row is a heading, not a student</label>
+      <div class="grid2">
+        <div class="field"><label for="impName">Student name column</label><select id="impName"></select></div>
+        <div class="field"><label for="impClass">Class column</label><select id="impClass"></select></div>
+        <div class="field"><label for="impScore">Score column <small>(optional)</small></label><select id="impScore"></select></div>
+        <div class="field" id="impDefaultClassField" hidden><label for="impDefaultClass">Class for all these students</label><input id="impDefaultClass" placeholder="e.g. 9 Advanced-3"></div>
+      </div>
+      <div><h4>Preview</h4><div class="tbl"><table id="impPreview"></table></div></div>
+    </div>
+    <p id="impMsg" class="msg"></p>
+    <div class="btn-row two">
+      <button type="button" class="btn" id="impCancel">Cancel</button>
+      <button type="submit" class="btn primary" id="impGo" disabled>Import</button>
+    </div>
+  </form>
+</dialog>
+
 <dialog id="accountDlg" class="dlg">
   <form id="accountForm" class="stack" novalidate>
     <h2>Your account</h2>

@@ -9,7 +9,14 @@
 //   messagingSenderId: "1234567890",
 //   appId: "1:1234567890:web:abcdef"
 // };
-window.FIREBASE_CONFIG = null;
+window.FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB3T5rZRRlBREuH2DmpwUJFkkC9VHIDuFA",
+  authDomain: "math-competitions-tracke-3945b.firebaseapp.com",
+  projectId: "math-competitions-tracke-3945b",
+  storageBucket: "math-competitions-tracke-3945b.firebasestorage.app",
+  messagingSenderId: "192398178880",
+  appId: "1:192398178880:web:204e080118f828046a3da5"
+};
 
 window.MCT_SETTINGS = {
   schoolLine: 'ATS RAK · Mathematics Department · AY 2026–27',

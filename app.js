@@ -85,7 +85,7 @@ async function firebaseStore() {
   const app = initializeApp(CFG);
   const a = auth.getAuth(app);
   const db = fs.getFirestore(app);
-  const ref = () => fs.doc(db, 'teachers', a.currentUser.uid);
+  const ref = () => fs.doc(db, 'users', a.currentUser.uid, 'private', 'tracker');
   const nice = e => ({
     'auth/invalid-credential': 'Wrong email or password.', 'auth/wrong-password': 'Wrong email or password.', 'auth/user-not-found': 'No account with this email. Create one first.',
     'auth/email-already-in-use': 'This email already has an account. Sign in instead.', 'auth/weak-password': 'Please use at least 8 characters.',
@@ -291,7 +291,7 @@ function viewStudents() {
     <section class="panel">${stepsBlock(c)}</section>
   </div>
   <section class="panel">
-    <div class="panel-head"><h2>Your students</h2><div class="btn-row two" style="min-width:min(100%,320px)"><button class="btn" type="button" id="addStudentBtn">+ Add student</button><label class="btn" for="csvIn">Import CSV</label><input id="csvIn" type="file" accept=".csv,text/csv" hidden></div></div>
+    <div class="panel-head"><h2>Your students</h2><div class="btn-row two" style="min-width:min(100%,320px)"><button class="btn" type="button" id="addStudentBtn">+ Add student</button><button class="btn" type="button" id="importBtn">Import Excel / CSV</button></div></div>
     ${R.length ? `<div><h4>Suggested for ${esc(compShort(c))}</h4><p class="hint" style="margin-bottom:8px">Highest SBQ1 score first; students in fewer competitions come first on ties.</p>
       <div class="sug">${sugg.map(s => `<div class="sugc"><span><b>${esc(s.n)}</b><small>${esc(s.cls)} · ${sc(s)} ${tags(s.n)}</small></span>${addBtn(s)}</div>`).join('') || '<p class="hint">Everyone is already added.</p>'}</div></div>
     <div class="filters"><input class="search" type="search" id="rq" placeholder="Search a student…" value="${esc(S.rq)}" aria-label="Search students">
@@ -299,7 +299,7 @@ function viewStudents() {
       <select id="rsort" aria-label="Sort"><option value="score" ${S.rsort === 'score' ? 'selected' : ''}>Highest score first</option><option value="name" ${S.rsort === 'name' ? 'selected' : ''}>A–Z</option></select></div>
     <div class="tbl"><table><thead><tr><th>Student</th><th>Class</th><th>SBQ1</th><th>Competitions</th><th></th></tr></thead><tbody>
       ${rows.map(s => `<tr><td style="font-weight:600">${esc(s.n)}</td><td style="white-space:nowrap">${esc(s.cls)}</td><td>${sc(s)}</td><td>${tags(s.n)}</td><td><div class="actions">${addBtn(s)}<button class="btn small ghost" type="button" data-edit="${esc(s.n)}" aria-label="Edit">Edit</button><button class="btn small ghost" type="button" data-delstu="${esc(s.n)}" aria-label="Delete">Remove</button></div></td></tr>`).join('') || '<tr><td colspan="5" class="hint">No student matches.</td></tr>'}
-    </tbody></table></div>` : `<p class="empty">No students yet. Add them one by one, or import a CSV with Name, Class and SBQ1 columns.</p>`}
+    </tbody></table></div>` : `<p class="empty">No students yet. Add them one by one, or import them from Excel, CSV or by pasting.</p>`}
   </section>`;
 }
 function addStudentTo(name) {
@@ -308,17 +308,6 @@ function addStudentTo(name) {
   if (mine(c.id).some(p => p.student === name)) return;
   S.data.participants.push({ id: uid(), compId: c.id, student: s.n, cls: s.cls, score: s.s ?? null, status: 'Nominated', createdAt: now() });
   persist(); render(); toast('Added ' + s.n.split(' ')[0]);
-}
-function parseCsv(txt) {
-  const lines = txt.replace(/\r/g, '').split('\n').filter(Boolean); if (!lines.length) return null;
-  const split = l => l.match(/("([^"]|"")*"|[^,]*)(,|$)/g).map(x => x.replace(/,$/, '').replace(/^"|"$/g, '').replace(/""/g, '"')).slice(0, -1);
-  const h = split(lines[0]).map(x => x.trim().toLowerCase());
-  const iN = h.findIndex(x => x === 'name' || x === 'student' || x === 'student name'), iC = h.findIndex(x => x === 'class' || x === 'section'), iS = h.findIndex(x => x.startsWith('sbq') || x.startsWith('score') || x.startsWith('result') || x.startsWith('average'));
-  if (iN < 0 || iC < 0) return null;
-  return lines.slice(1).map(split).filter(r => r[iN]).map(r => {
-    const cl = r[iC].trim(), m = cl.match(/^(\d+)\s+(\d+)\s+(\w+)/); const sv = iS >= 0 ? Number(String(r[iS]).replace('%', '')) : NaN;
-    return { n: r[iN].trim(), cls: m ? `${m[2]} ${m[3][0].toUpperCase() + m[3].slice(1)}-${m[1]}` : cl, s: isNaN(sv) ? null : sv };
-  });
 }
 let editing = null;
 function openStudent(name) {
@@ -337,6 +326,80 @@ $('studentForm').addEventListener('submit', e => {
   if (editing) { const s = S.data.roster.find(x => x.n === editing); s.n = n; s.cls = cls; s.s = sv; S.data.participants.forEach(p => { if (p.student === editing) { p.student = n; p.cls = cls; p.score = sv; } }); }
   else S.data.roster.push({ n, cls, s: sv });
   persist(); render(); $('studentDlg').close(); toast(editing ? 'Student updated' : 'Student added');
+});
+
+
+/* ---------- Import wizard (Excel, CSV or paste) ---------- */
+let XL = null;
+async function loadXlsx() {
+  if (XL) return XL;
+  await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'lib/xlsx.full.min.js'; sc.onload = res; sc.onerror = () => rej(new Error('Could not load the spreadsheet reader. Check your connection.')); document.head.appendChild(sc); });
+  XL = window.XLSX; return XL;
+}
+const IMP = { wb: null, rows: [], src: 'file' };
+const normClass = cl => { const m = String(cl).trim().match(/^(\d+)\s+(\d+)\s+(\w+)$/); return m ? `${m[2]} ${m[3][0].toUpperCase() + m[3].slice(1)}-${m[1]}` : String(cl).trim(); };
+const colLetter = i => { let s = ''; i++; while (i) { s = String.fromCharCode(64 + (i % 26 || 26)) + s; i = Math.floor((i - 1) / 26); } return s; };
+function guessCols(header) {
+  const h = header.map(x => String(x ?? '').toLowerCase());
+  const find = re => h.findIndex(x => re.test(x));
+  let name = find(/name|student|اسم|طالب/), cls = find(/class|section|grade|صف|شعبة|فصل/), score = find(/sbq|score|mark|result|average|%|درجة|علامة/);
+  if (name < 0) name = h.findIndex((x, i) => i !== cls && IMP.rows.slice(1, 6).every(r => isNaN(Number(r[i])) && String(r[i] ?? '').trim()));
+  return { name, cls, score };
+}
+function openImport() {
+  IMP.wb = null; IMP.rows = []; $('impFile').value = ''; $('impFileName').textContent = ''; $('impPaste').value = ''; $('impMap').hidden = true; $('impGo').disabled = true; $('impMsg').textContent = ''; $('impMsg').className = 'msg';
+  setSrc('file'); $('importDlg').showModal();
+}
+function setSrc(src) { IMP.src = src; document.querySelectorAll('[data-src]').forEach(b => b.classList.toggle('on', b.dataset.src === src)); $('srcFile').hidden = src !== 'file'; $('srcPaste').hidden = src !== 'paste'; }
+document.querySelectorAll('[data-src]').forEach(b => b.addEventListener('click', () => setSrc(b.dataset.src)));
+$('impCancel').addEventListener('click', () => $('importDlg').close());
+$('impFile').addEventListener('change', async () => {
+  const f = $('impFile').files[0]; if (!f) return; $('impFileName').textContent = f.name; $('impMsg').textContent = 'Reading…'; $('impMsg').className = 'msg';
+  try { const X = await loadXlsx(); const buf = await f.arrayBuffer(); IMP.wb = X.read(buf, { type: 'array', raw: false }); showSheets(); }
+  catch (e) { $('impMsg').textContent = 'Could not read that file. ' + e.message; $('impMsg').className = 'msg err'; }
+});
+let pasteT; $('impPaste').addEventListener('input', () => { clearTimeout(pasteT); pasteT = setTimeout(async () => {
+  const txt = $('impPaste').value; if (!txt.trim()) { $('impMap').hidden = true; $('impGo').disabled = true; return; }
+  try { const X = await loadXlsx(); IMP.wb = X.read(txt, { type: 'string', raw: false }); showSheets(); } catch (e) { $('impMsg').textContent = e.message; $('impMsg').className = 'msg err'; }
+}, 300); });
+function showSheets() {
+  const names = IMP.wb.SheetNames; $('impSheet').innerHTML = names.map(n => `<option>${esc(n)}</option>`).join(''); $('impSheetField').hidden = names.length < 2;
+  // Prefer the first sheet that has a few rows.
+  const best = names.find(n => (XL.utils.sheet_to_json(IMP.wb.Sheets[n], { header: 1 }).length > 1)) || names[0]; $('impSheet').value = best; loadSheet();
+}
+function loadSheet() {
+  const ws = IMP.wb.Sheets[$('impSheet').value];
+  IMP.rows = XL.utils.sheet_to_json(ws, { header: 1, defval: '', blankrows: false }).map(r => r.map(c => String(c ?? '').trim())).filter(r => r.some(Boolean));
+  if (!IMP.rows.length) { $('impMsg').textContent = 'That sheet is empty.'; $('impMsg').className = 'msg err'; $('impMap').hidden = true; $('impGo').disabled = true; return; }
+  const width = Math.max(...IMP.rows.map(r => r.length)); const header = IMP.rows[0];
+  const g = guessCols(header);
+  // Heading row? If the guessed name cell in row 1 looks like a label, keep the box ticked.
+  $('impHeader').checked = g.name >= 0 && /name|student|اسم/i.test(header[g.name] || '') || g.cls >= 0 && /class|section/i.test(header[g.cls] || '');
+  const opts = (sel, none) => { const o = []; if (none) o.push(`<option value="-1">${none}</option>`); for (let i = 0; i < width; i++) o.push(`<option value="${i}">${colLetter(i)}${header[i] ? ' · ' + esc(header[i].slice(0, 28)) : ''}</option>`); return o.join(''); };
+  $('impName').innerHTML = opts('name'); $('impClass').innerHTML = opts('cls', 'No class column — I will type it'); $('impScore').innerHTML = opts('score', 'No score column');
+  $('impName').value = g.name >= 0 ? g.name : 0; $('impClass').value = g.cls >= 0 ? g.cls : -1; $('impScore').value = g.score >= 0 ? g.score : -1;
+  $('impMap').hidden = false; $('impMsg').textContent = ''; $('impMsg').className = 'msg'; preview();
+}
+function mapped() {
+  const iN = Number($('impName').value), iC = Number($('impClass').value), iS = Number($('impScore').value), dc = $('impDefaultClass').value.trim();
+  const body = $('impHeader').checked ? IMP.rows.slice(1) : IMP.rows;
+  return body.map(r => { const n = (r[iN] || '').replace(/\s+/g, ' ').trim(); if (!n) return null; const cls = iC >= 0 ? normClass(r[iC] || '') : dc; const sv = iS >= 0 ? Number(String(r[iS]).replace('%', '').trim()) : NaN; return { n, cls, s: isNaN(sv) || r[iS] === '' ? null : sv }; }).filter(Boolean);
+}
+function preview() {
+  const iC = Number($('impClass').value); $('impDefaultClassField').hidden = iC >= 0;
+  const rows = mapped(); const ok = rows.filter(r => r.cls); const missing = rows.length - ok.length;
+  $('impPreview').innerHTML = `<thead><tr><th>Student</th><th>Class</th><th>Score</th></tr></thead><tbody>${rows.slice(0, 5).map(r => `<tr><td>${esc(r.n)}</td><td>${esc(r.cls) || '<span class="hint">missing</span>'}</td><td>${r.s != null ? r.s + '%' : '<span class="hint">—</span>'}</td></tr>`).join('')}${rows.length > 5 ? `<tr><td colspan="3" class="hint">… and ${rows.length - 5} more</td></tr>` : ''}</tbody>`;
+  $('impGo').disabled = !ok.length; $('impGo').textContent = ok.length ? `Import ${ok.length} student${ok.length === 1 ? '' : 's'}` : 'Import';
+  $('impMsg').textContent = missing ? `${missing} row${missing === 1 ? '' : 's'} have no class and will be skipped. Choose a class column or type a class.` : ''; $('impMsg').className = 'msg';
+}
+['impSheet'].forEach(id => $(id).addEventListener('change', loadSheet));
+['impHeader', 'impName', 'impClass', 'impScore'].forEach(id => $(id).addEventListener('change', preview));
+$('impDefaultClass').addEventListener('input', preview);
+$('importForm').addEventListener('submit', e => {
+  e.preventDefault(); const rows = mapped().filter(r => r.cls); if (!rows.length) return;
+  let added = 0, updated = 0;
+  rows.forEach(r => { const ex = S.data.roster.find(x => x.n.toLowerCase() === r.n.toLowerCase()); if (ex) { ex.cls = r.cls; if (r.s != null) ex.s = r.s; updated++; } else { S.data.roster.push(r); added++; } });
+  persist(); $('importDlg').close(); render(); toast(`${added} added, ${updated} updated`);
 });
 
 /* ---------- Competitions ---------- */
@@ -391,7 +454,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
 window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['home', 'students', 'competitions'].includes(h) && h !== S.tab) { S.tab = h; render(); } });
 
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],#togDone,#icsBtn,#addStudentBtn'); if (!t) return;
+  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
   const d = t.dataset;
   if (d.toggle) { S.open.has(d.toggle) ? S.open.delete(d.toggle) : S.open.add(d.toggle); render(); }
   else if (d.pc) { S.pickComp = d.pc; render(); }
@@ -411,6 +474,7 @@ document.addEventListener('click', async e => {
   else if (t.id === 'togDone') { S.showDone = !S.showDone; render(); }
   else if (t.id === 'icsBtn') downloadIcs();
   else if (t.id === 'addStudentBtn') openStudent(null);
+  else if (t.id === 'importBtn') openImport();
 });
 document.addEventListener('change', async e => {
   const t = e.target, d = t.dataset;
@@ -422,12 +486,6 @@ document.addEventListener('change', async e => {
   else if (d.pstat) { const p = S.data.participants.find(x => x.id === d.pstat); if (p) { p.status = t.value; persist(); } }
   else if (t.id === 'rclass') { S.rclass = t.value; render(); }
   else if (t.id === 'rsort') { S.rsort = t.value; render(); }
-  else if (t.id === 'csvIn' && t.files[0]) {
-    const rows = parseCsv(await t.files[0].text()); t.value = '';
-    if (!rows || !rows.length) { banner('That file needs Name and Class columns (plus an optional SBQ1 or Score column).'); return; }
-    let added = 0; rows.forEach(r => { const ex = S.data.roster.find(x => x.n === r.n); if (ex) { ex.cls = r.cls; if (r.s != null) ex.s = r.s; } else { S.data.roster.push(r); added++; } });
-    persist(); render(); toast(`${added} new student${added === 1 ? '' : 's'} imported (${rows.length - added} updated)`);
-  }
 });
 let rqT; document.addEventListener('input', e => { if (e.target.id === 'rq') { clearTimeout(rqT); rqT = setTimeout(() => { S.rq = e.target.value.trim().toLowerCase(); render(); }, 150); } });
 document.addEventListener('submit', e => {
@@ -494,7 +552,7 @@ async function enter(user) {
 function leave() { S.user = null; S.data = null; $('app').hidden = true; $('authView').hidden = false; $('auPass').value = ''; }
 
 (async () => {
-  $('schoolLine').textContent = SET.schoolLine || ''; $('schoolLine2').textContent = (SET.schoolLine || '').split('·')[0].trim();
+  $('schoolLine').textContent = (SET.schoolLine || '').split('·').slice(0, 2).map(x => x.trim()).join(' · '); $('schoolLine2').textContent = (SET.schoolLine || '').split('·')[0].trim();
   try { await loadShared(); } catch { banner('Could not load the competitions list. Check your connection and reload.'); }
   try { store = CFG ? await firebaseStore() : demoStore(); }
   catch (e) { store = demoStore(); banner('Firebase could not start (' + e.message + '). Running in demo mode.'); }

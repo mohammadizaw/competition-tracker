@@ -1,15 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Each teacher owns exactly one document: teachers/{their user id}.
-    // Nobody else can read or write it. Everything else is locked.
-    match /teachers/{uid} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == uid
-                         && request.auth.token.firebase.sign_in_provider != 'anonymous';
-    }
-    match /{document=**} {
-      allow read, write: if false;
+    // Each teacher's data lives under users/{their user id}/... and only they can read or write it.
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
