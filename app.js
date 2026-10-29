@@ -188,7 +188,7 @@ function toggleAct(id, v) { const a = S.data.actions.find(x => x.id === id); if 
 function hideAct(id, v) { const a = S.data.actions.find(x => x.id === id); if (!a) return; a.hidden = v; persist(); render(); toast(v ? 'Hidden' : 'Back in your list'); }
 function actRow(a) {
   const c = comp(a.comp); const b = [];
-  if (a.email) b.push(`<button class="btn small primary" type="button" data-mail="${a.email}" data-cid="${a.comp || ''}" data-act="${a.id}">✉ Write email</button>`);
+  if (a.email) b.push(`<button class="btn small primary" type="button" data-mail="${a.email}" data-cid="${a.comp || ''}" data-act="${a.id}">Write email</button>`);
   if (a.comp && PICK[a.comp]) b.push(`<button class="btn small" type="button" data-gopick="${a.comp}">Pick students (${mine(a.comp).length})</button>`);
   if (a.comp && c) b.push(`<button class="btn small" type="button" data-gocomp="${a.comp}">Details</button>`);
   if (a.done && !a.hidden) b.push(`<button class="btn small ghost" type="button" data-hide="${a.id}">Hide</button>`);
@@ -227,7 +227,7 @@ function viewCal() {
     const d = new Date(start); d.setDate(start.getDate() + i); const k = iso(d), its = m[k] || [];
     cells += `<button type="button" class="day ${d.getMonth() !== first.getMonth() ? 'out' : ''} ${k === iso(today) ? 'today' : ''} ${S.calSel === k ? 'sel' : ''}" data-day="${k}" aria-label="${fmt(k)}${its.length ? ', ' + its.length + ' items' : ''}"><span>${d.getDate()}</span><span class="dots">${its.slice(0, 6).map(x => `<i class="dot ${x.k === 'ev' ? 'ev' : x.k === 'dn' ? 'dn' : ''}"></i>`).join('')}</span></button>`;
   }
-  const sel = S.calSel ? (m[S.calSel] ? `<div class="daylist"><b>${esc(fmt(S.calSel, false))}</b><ul>${m[S.calSel].map(x => `<li>${x.k === 'ev' ? '📅 ' : x.k === 'dn' ? '✓ ' : '☐ '}${esc(x.t)}</li>`).join('')}</ul></div>` : `<p class="hint">Nothing on ${esc(fmt(S.calSel, false))}.</p>`) : '';
+  const sel = S.calSel ? (m[S.calSel] ? `<div class="daylist"><b>${esc(fmt(S.calSel, false))}</b><ul>${m[S.calSel].map(x => `<li>${x.k === 'ev' ? 'Event: ' : x.k === 'dn' ? 'Done: ' : 'To do: '}${esc(x.t)}</li>`).join('')}</ul></div>` : `<p class="hint">Nothing on ${esc(fmt(S.calSel, false))}.</p>`) : '';
   return `<div class="calhead"><button class="btn icon" type="button" data-cal="-1" aria-label="Previous month">‹</button><h2>${first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })}</h2><button class="btn icon" type="button" data-cal="1" aria-label="Next month">›</button></div>
     <div class="cal">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => `<div class="dow">${d}</div>`).join('')}${cells}</div>
     <div class="legend"><span><i class="dot"></i>My action</span><span><i class="dot ev"></i>Competition date</span><span><i class="dot dn"></i>Done</span></div>${sel}
@@ -260,7 +260,7 @@ function stepsBlock(c) {
 }
 function emailBtnFor(cid) {
   const t = { ikmc: 'nominee', 'challenge-me': 'challenge', 'steam-champions': 'steam', amc: 'amc' }[cid] || 'register';
-  return `<button class="btn primary" type="button" data-mail="${t}" data-cid="${cid}">✉ Email the coordinators</button>`;
+  return `<button class="btn primary" type="button" data-mail="${t}" data-cid="${cid}">Email the coordinators</button>`;
 }
 function viewStudents() {
   const elig = Object.keys(PICK).filter(id => comp(id) && myState(comp(id)).status !== 'Closed');
@@ -270,7 +270,7 @@ function viewStudents() {
   const chips = elig.map(id => `<button type="button" class="chip ${id === S.pickComp ? 'on' : ''}" data-pc="${id}">${esc(compShort(comp(id)))}<span class="n">${mine(id).length}</span></button>`).join('');
   const R = S.data.roster;
   const sugg = R.filter(s => !chosenNames.has(s.n)).sort((a, b) => (b.s || 0) - (a.s || 0) || compsOfStudent(a.n).length - compsOfStudent(b.n).length).slice(0, 6);
-  const addBtn = s => chosenNames.has(s.n) ? `<button class="btn small soft" type="button" data-rm-name="${esc(s.n)}">✓ Added</button>` : `<button class="btn small" type="button" data-add="${esc(s.n)}" ${full ? 'disabled' : ''}>+ Add</button>`;
+  const addBtn = s => chosenNames.has(s.n) ? `<button class="btn small soft" type="button" data-rm-name="${esc(s.n)}">Added ✓</button>` : `<button class="btn small" type="button" data-add="${esc(s.n)}" ${full ? 'disabled' : ''}>+ Add</button>`;
   const classes = [...new Set(R.map(s => s.cls))].sort();
   let rows = R.filter(s => (S.rclass === 'all' || s.cls === S.rclass) && (!S.rq || s.n.toLowerCase().includes(S.rq)));
   rows.sort(S.rsort === 'name' ? (a, b) => a.n < b.n ? -1 : 1 : (a, b) => (b.s || 0) - (a.s || 0));
@@ -284,9 +284,9 @@ function viewStudents() {
       <div><h4>Your students for this competition · ${chosen.length}${rule.max ? ' of ' + rule.max : ''}</h4>
         ${chosen.length ? `<ul class="sel">${chosen.map(p => `<li><span class="nm">${esc(p.student)}<small>${esc(p.cls)}${p.score != null ? ' · SBQ1 ' + p.score + '%' : ''}</small></span>
           <select data-pstat="${p.id}" aria-label="Status">${PSTAT.map(x => `<option ${x === p.status ? 'selected' : ''}>${x}</option>`).join('')}</select>
-          <button class="btn small ghost" type="button" data-pdel="${p.id}" aria-label="Remove ${esc(p.student)}">✕</button></li>`).join('')}</ul>` : `<p class="empty">No students yet. Tap “+ Add” next to a student below.</p>`}
+          <button class="btn small ghost" type="button" data-pdel="${p.id}" aria-label="Remove ${esc(p.student)}">Remove</button></li>`).join('')}</ul>` : `<p class="empty">No students yet. Tap “+ Add” next to a student below.</p>`}
       </div>
-      <div class="btn-row two">${emailBtnFor(c.id)}<button class="btn" type="button" data-mail="mahmoud" data-cid="">✉ List for Mr. Mahmoud</button></div>
+      <div class="btn-row two">${emailBtnFor(c.id)}<button class="btn" type="button" data-mail="mahmoud" data-cid="">List for Mr. Mahmoud</button></div>
     </section>
     <section class="panel">${stepsBlock(c)}</section>
   </div>
@@ -298,7 +298,7 @@ function viewStudents() {
       <select id="rclass" aria-label="Class"><option value="all">All classes (${R.length})</option>${classes.map(x => `<option ${x === S.rclass ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select>
       <select id="rsort" aria-label="Sort"><option value="score" ${S.rsort === 'score' ? 'selected' : ''}>Highest score first</option><option value="name" ${S.rsort === 'name' ? 'selected' : ''}>A–Z</option></select></div>
     <div class="tbl"><table><thead><tr><th>Student</th><th>Class</th><th>SBQ1</th><th>Competitions</th><th></th></tr></thead><tbody>
-      ${rows.map(s => `<tr><td style="font-weight:600">${esc(s.n)}</td><td style="white-space:nowrap">${esc(s.cls)}</td><td>${sc(s)}</td><td>${tags(s.n)}</td><td><div class="actions">${addBtn(s)}<button class="btn small ghost" type="button" data-edit="${esc(s.n)}" aria-label="Edit">✎</button><button class="btn small ghost" type="button" data-delstu="${esc(s.n)}" aria-label="Delete">✕</button></div></td></tr>`).join('') || '<tr><td colspan="5" class="hint">No student matches.</td></tr>'}
+      ${rows.map(s => `<tr><td style="font-weight:600">${esc(s.n)}</td><td style="white-space:nowrap">${esc(s.cls)}</td><td>${sc(s)}</td><td>${tags(s.n)}</td><td><div class="actions">${addBtn(s)}<button class="btn small ghost" type="button" data-edit="${esc(s.n)}" aria-label="Edit">Edit</button><button class="btn small ghost" type="button" data-delstu="${esc(s.n)}" aria-label="Delete">Remove</button></div></td></tr>`).join('') || '<tr><td colspan="5" class="hint">No student matches.</td></tr>'}
     </tbody></table></div>` : `<p class="empty">No students yet. Add them one by one, or import a CSV with Name, Class and SBQ1 columns.</p>`}
   </section>`;
 }
@@ -342,12 +342,12 @@ $('studentForm').addEventListener('submit', e => {
 /* ---------- Competitions ---------- */
 function card(c0) {
   const c = myState(c0); const open = S.open.has(c.id), nx = nextDate(c), cls = scls(c.status), ps = mine(c.id);
-  const head = `<button class="head" type="button" data-toggle="${c.id}" aria-expanded="${open}">
+  const head = `<button class="head" type="button" data-toggle="${c.id}" aria-expanded="${open}"><span class="mark"></span>
     <div style="min-width:0"><h3>${esc(c.name)}</h3><div class="meta"><span>${esc(c.organizer || '')}</span><span>${ps.length} student${ps.length === 1 ? '' : 's'}</span>${nx ? `<span>${esc(nx.label)} · ${esc(fmt(nx.date))}</span>` : ''}</div></div>
-    <div class="right"><span class="pill p-${cls}">${esc(c.status)}</span><span class="hint">${open ? '▲' : '▼'}</span></div></button>`;
+    <div class="right"><span class="pill p-${cls}">${esc(c.status)}</span><span class="hint">${open ? 'Hide' : 'Open'}</span></div></button>`;
   if (!open) return `<article class="card s-${cls}" id="c-${c.id}">${head}</article>`;
   const dates = (c.dates || []).map(x => `<li class="${x.date && dleft(x.end || x.date) < 0 ? 'past' : ''}"><span class="dd">${x.date ? esc(fmt(x.date)) + (x.end ? ' – ' + esc(fmt(x.end)) : '') : 'TBC'}</span>${esc(x.label)}</li>`).join('');
-  const links = (c.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)} ↗</a>`).join('');
+  const links = (c.links || []).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label || l.url)}</a>`).join('');
   const src = (c.emails || []).map(e => `<li>${esc(e.date)} · ${esc(e.from)} · “${esc(e.subject)}”</li>`).join('');
   return `<article class="card s-${cls}" id="c-${c.id}">${head}<div class="body"><div class="sec">
       ${c.action ? `<div class="callout warn"><b>Action needed:</b> ${esc(c.action)}</div>` : ''}
@@ -358,7 +358,7 @@ function card(c0) {
       ${src ? `<div><h4>Source emails</h4><ul class="src">${src}</ul></div>` : ''}
     </div><div class="sec">
       ${c.steps ? `<div>${stepsBlock(c)}</div>` : ''}
-      <div><h4>My students · ${ps.length}</h4>${ps.length ? `<ul class="sel">${ps.map(p => `<li><span class="nm">${esc(p.student)}<small>${esc(p.cls)}</small></span><span class="pill p-progress">${esc(p.status)}</span><button class="btn small ghost" type="button" data-pdel="${p.id}" aria-label="Remove">✕</button></li>`).join('')}</ul>` : `<p class="hint">No students yet.</p>`}</div>
+      <div><h4>My students · ${ps.length}</h4>${ps.length ? `<ul class="sel">${ps.map(p => `<li><span class="nm">${esc(p.student)}<small>${esc(p.cls)}</small></span><span class="pill p-progress">${esc(p.status)}</span><button class="btn small ghost" type="button" data-pdel="${p.id}" aria-label="Remove">Remove</button></li>`).join('')}</ul>` : `<p class="hint">No students yet.</p>`}</div>
       <div class="btn-row two">${PICK[c.id] ? `<button class="btn" type="button" data-gopick="${c.id}">Pick students</button>` : '<span></span>'}${emailBtnFor(c.id)}</div>
       <div class="grid2"><div class="field"><label for="st-${c.id}">My status</label><select id="st-${c.id}" data-status="${c.id}">${STATUS.map(s => `<option ${s.k === c.status ? 'selected' : ''}>${s.k}</option>`).join('')}</select></div>
         <div class="field"><label for="ld-${c.id}">Teacher in charge</label><input id="ld-${c.id}" data-lead="${c.id}" value="${esc(c.lead || '')}" placeholder="optional"></div></div>
