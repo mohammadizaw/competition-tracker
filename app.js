@@ -54,7 +54,7 @@ const S = {
   role: null, verified: true, roles: { coordinators: [] }, summaries: [], ovComp: 'all', ovOpen: new Set(), unsubSum: null,
   pickComp: 'ikmc', rq: '', rclass: 'all', rsort: 'score', open: new Set(), calMonth: null, calSel: null, showDone: false
 };
-const blank = () => ({ displayName: '', actions: [], stepsDone: {}, compState: {}, roster: [], participants: [], updatedAt: now() });
+const blank = () => ({ displayName: '', actions: [], stepsDone: {}, compState: {}, roster: [], participants: [], share: null, updatedAt: now() });
 
 /* ---------- storage adapters ---------- */
 let store; // { onAuth(cb), signIn, signUp, signOut, reset, load(), save(doc), updateName }
@@ -225,7 +225,8 @@ function viewHome() {
   const list = (g.length ? g.map(([h, xs]) => `<div><p class="group-title">${h} · ${xs.filter(x => !x.done).length} to do</p>${xs.map(actRow).join('')}</div>`).join('') : `<p class="empty">All your actions are done. Add a reminder below if you need one.</p>`)
     + (hidden.length ? `<div><button class="btn small ghost" type="button" id="togDone">${S.showDone ? 'Hide' : 'Show'} ${hidden.length} hidden</button>${S.showDone ? hidden.map(actRow).join('') : ''}</div>` : '');
   const greet = teacherName() ? `Hello, ${esc(teacherName().split(' ')[0])}` : 'What to do next';
-  return `${stats}<div class="cols"><section class="panel"><div class="panel-head"><h2>${greet}</h2><span class="hint">Tick each action when done</span></div>${list}
+  const consent = S.data.share == null && !store.demo ? `<section class="panel"><h2>Share your summary with the department coordinator?</h2><p>If you agree, the coordinator can see which students you entered in which competition and their status, so the department has one overall picture. Your class list, scores, notes and reminders stay private. You can change this any time from your account screen.</p><div class="btn-row two"><button class="btn" type="button" data-share="0">Not now</button><button class="btn primary" type="button" data-share="1">Yes, share</button></div></section>` : '';
+  return `${consent}${stats}<div class="cols"><section class="panel"><div class="panel-head"><h2>${greet}</h2><span class="hint">Tick each action when done</span></div>${list}
     <form class="addact" id="addAct"><div class="field"><label for="aaT">Add your own reminder</label><input id="aaT" placeholder="e.g. Collect permission slips" required></div><div class="field"><label for="aaD">Date</label><input id="aaD" type="date" required></div><button class="btn primary" type="submit">Add</button></form></section>
     <section class="panel">${viewCal()}</section></div>`;
 }
@@ -455,14 +456,19 @@ function viewComps() {
 
 /* ---------- Department summary (what the coordinator can see) ---------- */
 function buildSummary() {
+  if (S.data.share !== true) return { name: teacherName(), email: S.user.email || '', share: false, updatedAt: now() };
   const A = S.data.actions.filter(a => !a.done);
   const comps = {}; S.comps.forEach(c => { const st = myState(c); const steps = c.steps || []; comps[c.id] = { status: st.status, steps: [(S.data.stepsDone[c.id] || []).length, steps.length] }; });
   return {
-    name: teacherName(), email: S.user.email || '', updatedAt: now(),
+    name: teacherName(), email: S.user.email || '', share: true, updatedAt: now(),
     participants: S.data.participants.map(p => ({ compId: p.compId, student: p.student, cls: p.cls, status: p.status })),
     actions: { open: A.length },
     comps, rosterSize: S.data.roster.length
   };
+}
+async function setShare(v) {
+  S.data.share = v; await persist(true); render();
+  toast(v ? 'Sharing with the coordinator is on' : 'Sharing is off. Your details were removed from the overview.');
 }
 const isAdmin = () => S.role === 'owner' || S.role === 'coordinator';
 async function resolveRole() {
@@ -507,12 +513,14 @@ function exportOverviewCsv() {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = 'competition-participants.csv'; document.body.appendChild(a); a.click(); a.remove(); toast('CSV downloaded');
 }
 function viewOverview() {
-  const T = S.summaries, all = T.flatMap(t => (t.participants || []).map(p => Object.assign({ teacher: t }, p)));
+  const ALL = S.summaries, T = ALL.filter(t => t.share === true), notSharing = ALL.filter(t => t.share !== true);
+  const all = T.flatMap(t => (t.participants || []).map(p => Object.assign({ teacher: t }, p)));
   const active = S.comps.filter(c => all.some(p => p.compId === c.id));
   const sel = S.ovComp === 'all' ? all : all.filter(p => p.compId === S.ovComp);
   const n = (arr, f) => arr.filter(f).length;
+  const nsNote = notSharing.length ? `<p class="hint">${notSharing.length} teacher${notSharing.length === 1 ? ' has' : 's have'} signed up but not chosen to share yet: ${notSharing.map(t => esc(teacherLabel(t))).join(', ')}. Only what teachers agree to share appears here.</p>` : '';
   const chips = `<div class="chips" role="tablist"><button type="button" class="chip ${S.ovComp === 'all' ? 'on' : ''}" data-ov="all">All competitions<span class="n">${all.length}</span></button>${active.map(c => `<button type="button" class="chip ${S.ovComp === c.id ? 'on' : ''}" data-ov="${c.id}">${esc(compShort(c))}<span class="n">${n(all, p => p.compId === c.id)}</span></button>`).join('')}</div>`;
-  const stats = `<div class="stats"><div class="stat"><b>${T.length}</b><span>teachers</span></div><div class="stat"><b>${new Set(sel.map(p => p.teacher.uid + '|' + p.student)).size}</b><span>students</span></div><div class="stat"><b>${sel.length}</b><span>entries</span></div><div class="stat"><b>${S.ovComp === 'all' ? active.length : new Set(sel.map(p => p.teacher.uid)).size}</b><span>${S.ovComp === 'all' ? 'competitions' : 'teachers in it'}</span></div></div>`;
+  const stats = `<div class="stats"><div class="stat"><b>${T.length}</b><span>teachers sharing</span></div><div class="stat"><b>${new Set(sel.map(p => p.teacher.uid + '|' + p.student)).size}</b><span>students</span></div><div class="stat"><b>${sel.length}</b><span>entries</span></div><div class="stat"><b>${S.ovComp === 'all' ? active.length : new Set(sel.map(p => p.teacher.uid)).size}</b><span>${S.ovComp === 'all' ? 'competitions' : 'teachers in it'}</span></div></div>`;
   // Matrix: teachers x competitions
   const matrix = active.length ? `<div class="tbl"><table><thead><tr><th>Teacher</th>${active.map(c => `<th title="${esc(c.name)}">${esc(compShort(c))}</th>`).join('')}<th>Total</th></tr></thead><tbody>
     ${T.map(t => { const ps = t.participants || []; return `<tr><td style="font-weight:500;white-space:nowrap">${esc(teacherLabel(t))}</td>${active.map(c => { const k = n(ps, p => p.compId === c.id); return `<td style="text-align:center">${k ? `<b>${k}</b>` : '<span class="hint">·</span>'}</td>`; }).join('')}<td style="text-align:center"><b>${ps.length}</b></td></tr>`; }).join('')}
@@ -540,10 +548,10 @@ function viewOverview() {
         <div class="btn-row n1"><button class="btn" type="button" data-remind="${t.uid}">Write next-steps email</button></div></div>` : ''}</article>`;
   }).join('') || '<p class="empty">No teachers have signed up yet.</p>';
   const coordUids = S.roles?.coordinatorUids || [];
-  const others = T.filter(t => t.uid !== S.user.uid && (t.email || '').toLowerCase() !== OWNER);
+  const others = ALL.filter(t => t.uid !== S.user.uid && (t.email || '').toLowerCase() !== OWNER);
   const roles = S.role === 'owner' ? `<section class="panel"><h2>Who can see this overview</h2><p class="hint">You, as owner, plus any teacher you give access to below. Coordinators see students' names, classes and competition status for every teacher, but never class lists, scores or private notes. Only teachers who have already signed up can be chosen.</p>
     ${others.length ? `<ul class="sel">${others.map(t => { const on = coordUids.includes(t.uid); return `<li style="grid-template-columns:minmax(0,1fr) auto"><span class="nm">${esc(teacherLabel(t))}<small>${esc(t.email || '')}${on ? ' · coordinator' : ''}</small></span><button class="btn small ${on ? 'ghost' : ''}" type="button" data-coord="${t.uid}" data-on="${on ? 1 : 0}">${on ? 'Remove access' : 'Give access'}</button></li>`; }).join('')}</ul>` : '<p class="hint">No other teachers have signed up yet. Once a colleague creates an account, they appear here.</p>'}</section>` : '';
-  return `<div class="panel-head"><h2>Department overview</h2><button class="btn small" type="button" id="ovCsv">Download CSV</button></div>${stats}${chips}
+  return `<div class="panel-head"><h2>Department overview</h2><button class="btn small" type="button" id="ovCsv">Download CSV</button></div>${nsNote}${stats}${chips}
     <section class="panel"><div class="panel-head"><h2>Students entered, by teacher and competition</h2><span class="hint">Teachers choose which competitions to join</span></div>${matrix}</section>
     <div class="cols">${statusPanel}${classPanel}</div>
     <div class="cols"><section class="panel"><div class="panel-head"><h2>By competition</h2></div><div class="list">${byComp}</div></section>
@@ -572,7 +580,7 @@ document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () =>
 window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['home', 'students', 'competitions', 'overview'].includes(h) && h !== S.tab) { S.tab = h; render(); } });
 
 document.addEventListener('click', async e => {
-  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],[data-delclass],[data-ov],[data-ovtoggle],[data-remind],[data-coord],#ovCsv,#delAllStu,#pickClassHint,#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
+  const t = e.target.closest('[data-toggle],[data-pc],[data-add],[data-rm-name],[data-pdel],[data-mail],[data-gopick],[data-gocomp],[data-cal],[data-day],[data-delact],[data-hide],[data-unhide],[data-edit],[data-delstu],[data-delclass],[data-ov],[data-ovtoggle],[data-remind],[data-coord],[data-share],#ovCsv,#delAllStu,#pickClassHint,#togDone,#icsBtn,#addStudentBtn,#importBtn'); if (!t) return;
   const d = t.dataset;
   if (d.toggle) { S.open.has(d.toggle) ? S.open.delete(d.toggle) : S.open.add(d.toggle); render(); }
   else if (d.pc) { S.pickComp = d.pc; render(); }
@@ -595,6 +603,7 @@ document.addEventListener('click', async e => {
   else if (t.id === 'togDone') { S.showDone = !S.showDone; render(); }
   else if (t.id === 'icsBtn') downloadIcs();
   else if (t.id === 'addStudentBtn') openStudent(null);
+  else if (d.share !== undefined) setShare(d.share === '1');
   else if (d.ov) { S.ovComp = d.ov; render(); }
   else if (d.ovtoggle) { S.ovOpen.has(d.ovtoggle) ? S.ovOpen.delete(d.ovtoggle) : S.ovOpen.add(d.ovtoggle); render(); }
   else if (d.remind) openRemind(d.remind);
@@ -633,7 +642,8 @@ document.querySelectorAll('.seg.theme [data-theme]').forEach(b => b.addEventList
 applyTheme((() => { try { return localStorage.getItem('mct-theme') || 'auto'; } catch { return 'auto'; } })());
 
 /* ---------- account dialog ---------- */
-$('userBtn').addEventListener('click', () => { $('acName').value = teacherName(); $('acEmail').textContent = S.user.email; $('accountDlg').showModal(); });
+$('userBtn').addEventListener('click', () => { $('acName').value = teacherName(); $('acEmail').textContent = S.user.email; $('acShare').checked = S.data.share === true; $('accountDlg').showModal(); });
+$('acShare').addEventListener('change', () => setShare($('acShare').checked));
 $('accountForm').addEventListener('submit', async e => { e.preventDefault(); S.data.displayName = $('acName').value.trim(); persist(); try { await store.updateName(S.data.displayName); } catch {} $('accountDlg').close(); render(); toast('Saved'); });
 $('signOutBtn').addEventListener('click', async () => { $('accountDlg').close(); await persist(true); await store.signOut(); });
 

@@ -165,7 +165,8 @@
     <h2>Your account</h2>
     <div class="field"><label for="acName">Your name (signs your emails)</label><input id="acName" placeholder="e.g. Mohammad Awwad"></div>
     <div class="field"><label>Signed in as</label><p class="mono" id="acEmail"></p></div>
-    <p class="hint">Your class list, scores and notes are private to you. The department coordinator can see which students you entered in which competition, their status, and whether you have late actions.</p>
+    <label style="display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:start;padding:12px;border:1px solid var(--line);border-radius:var(--r)"><input type="checkbox" id="acShare" style="margin-top:2px"><span><b style="font-weight:500">Share my competition summary with the department coordinator</b><br><span class="hint">They see which students you entered in which competition and their status. Your class list, scores, notes and reminders stay private. Untick to remove your details from the overview.</span></span></label>
+    
     <div class="btn-row two">
       <button type="button" class="btn danger-ghost" id="signOutBtn">Sign out</button>
       <button type="submit" class="btn primary">Save</button>
